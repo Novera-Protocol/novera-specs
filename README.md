@@ -45,6 +45,8 @@ This repository uses four terms precisely. They are not interchangeable.
 | NoveraEvent model and event authority rules | Specified, with schema and validator implemented |
 | Evidence and policy-result models | Specified, with schemas implemented |
 | NovaDeed reference state machine | Specified; checked by the validator for the examples |
+| Versioned workflow profiles and current-transition authorization gates | Specified; reference profile checked by the validator |
+| Signed event-envelope and audit-history integrity contracts | Specified; no production signing/event-store implementation exists |
 | Settlement Adapter and Network Adapter boundaries | Specified as interface semantics only; no adapter exists |
 | Novera Intelligence | Future capability; only its boundary is specified |
 | Protocol reference implementation, APIs, SDKs, contracts | Not started; not part of this repository |
@@ -147,7 +149,8 @@ novera-specs/
 ├── architecture/                 Cross-cutting models and boundaries
 ├── primitives/                   NovaID, NovaRegistry, NovaDeed
 ├── schemas/                      JSON Schema Draft 2020-12 definitions
-│   └── common.schema.json        Shared definitions referenced by every record schema
+│   ├── common.schema.json        Shared definitions referenced by every record schema
+│   └── workflow-profile.schema.json  Versioned transition authorization profile
 ├── examples/                     Synthetic examples, one per record schema
 │   └── real-estate-sequence/     Synthetic event sequence for the reference workflow
 ├── workflows/                    Reference workflows
@@ -183,7 +186,7 @@ npm test           # validator tests, including negative cases
 5. an example is missing for a record schema, is not labelled synthetic, or fails validation;
 6. a semantic rule fails, such as an illegal NovaDeed transition, a broken transition chain, a state digest that does not match the referenced record, an eligibility state based on an unconfirmed claim, or an event that precedes the events or policy results it relies on.
 
-The test suite mutates copies of the schemas and examples to confirm that each class of error is detected.
+The test suite mutates copies of the schemas and examples to confirm that each class of error is detected. For the reference workflow it also resolves the pinned workflow profile, checks proposer/confirmer authorization for the current transition, and verifies profile-required policy gates.
 
 ## Contributing
 
