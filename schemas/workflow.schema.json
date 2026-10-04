@@ -40,9 +40,14 @@
       ]
     },
     "workflowProfile": {
-      "description": "Optional workflow profile that defines roles, states and policies, for example novera:real_estate.purchase.reference. The reference profile is described in workflows/real-estate-reference.md and is illustrative.",
+      "description": "Optional workflow profile identifier that defines machine-readable authorization, policy and evidence requirements, for example novera-ref:real_estate.purchase.reference. When present, workflowProfileVersion is REQUIRED and implementations MUST resolve the exact profile version.",
       "type": "string",
       "pattern": "^[a-z][a-z0-9-]{1,31}:[a-z][a-z0-9_.]{0,95}$"
+    },
+    "workflowProfileVersion": {
+      "description": "Exact semantic version of workflowProfile used to authorize this workflow. REQUIRED whenever workflowProfile is present.",
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+([-+][0-9A-Za-z.-]+)?$"
     },
     "assetId": { "description": "NovaRegistry asset the workflow concerns.", "$ref": "common.schema.json#/$defs/assetId" },
     "participants": {
@@ -86,8 +91,26 @@
   },
   "allOf": [
     {
+      "description": "A workflow that names a profile also pins its exact profile version.",
+      "if": { "required": ["workflowProfile"] },
+      "then": { "required": ["workflowProfileVersion"] }
+    },
+    {
       "if": { "properties": { "workflowState": { "enum": ["settlement_pending", "completed"] } }, "required": ["workflowState"] },
       "then": { "properties": { "settlementRef": { "$ref": "#/$defs/settlementRef" } } }
+    },
+    {
+      "description": "Settlement is authorized before submit: a workflow cannot enter settlement_pending while the adapter is only prepared.",
+      "if": { "properties": { "workflowState": { "const": "settlement_pending" } }, "required": ["workflowState"] },
+      "then": {
+        "properties": {
+          "settlementRef": {
+            "properties": {
+              "status": { "enum": ["validated", "submitted", "observed", "reconciled", "failed"] }
+            }
+          }
+        }
+      }
     },
     {
       "if": { "properties": { "workflowState": { "const": "completed" } }, "required": ["workflowState"] },
@@ -240,7 +263,7 @@
       }
     },
     "settlementRef": {
-      "description": "Reference to settlement through a Settlement Adapter. Status values follow the adapter lifecycle in architecture/settlement-adapter.md.",
+      "description": "Reference to settlement through a Settlement Adapter. It is a workflow-state snapshot committed only through normal Novera state transitions; intermediate adapter progress is reported as external_observation events.",
       "type": "object",
       "additionalProperties": false,
       "required": ["adapterId", "settlementType", "status", "updatedAt"],
