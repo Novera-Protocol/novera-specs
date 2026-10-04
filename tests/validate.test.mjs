@@ -164,15 +164,22 @@ test("rejects an assistive proposal without confidence and extraction provenance
   assertFails(r, "EXAMPLE_INVALID");
 });
 
-test("accepts a well-formed assistive proposal", () => {
-  const r = withRepo((d) => editJson(d, "examples/real-estate-sequence/01-proposal.event.json", (x) => {
-    x.actorRef = { actorType: "assistive_system", actorId: "sys_01jq3k8m2n4p6r8s0t2v4w6x8y" };
-    x.confidence = 0.82;
-    x.provenance = {
-      channel: "assistive_extraction",
-      extraction: { method: "document_extraction", modelIdentifier: "synthetic-model/0", inputEvidenceRefs: x.evidenceRefs },
-    };
-  }));
+test("accepts a well-formed assistive proposal when the workflow profile permits that proposer type", () => {
+  const r = withRepo((d) => {
+    editJson(d, "examples/real-estate-sequence/01-proposal.event.json", (x) => {
+      x.actorRef = { actorType: "assistive_system", actorId: "sys_01jq3k8m2n4p6r8s0t2v4w6x8y" };
+      x.confidence = 0.82;
+      x.provenance = {
+        channel: "assistive_extraction",
+        extraction: { method: "document_extraction", modelIdentifier: "synthetic-model/0", inputEvidenceRefs: x.evidenceRefs },
+      };
+    });
+    editJson(d, "examples/workflow-profile.example.json", (x) => {
+      const rule = x.transitionRules.find((tr) => tr.from === "conditions_pending" && tr.to === "approved");
+      rule.proposer.actorTypes.push("assistive_system");
+      rule.proposer.roles = [];
+    });
+  });
   assert.deepEqual(r.errors, []);
 });
 
