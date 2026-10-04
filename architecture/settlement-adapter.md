@@ -19,7 +19,8 @@ The **Settlement Adapter** is the architectural boundary between a NovaDeed work
 
 ```mermaid
 flowchart LR
-  WF["NovaDeed workflow<br/>ready_for_settlement"] -->|"prepare / validate / submit"| SA["Settlement Adapter"]
+  WF["NovaDeed workflow<br/>ready_for_settlement"] -->|"prepare / validate"| SA["Settlement Adapter"]
+  WF2["NovaDeed workflow<br/>settlement_pending"] -->|"authorized submit"| SA
   SA -->|"provider-specific protocol"| P["Settlement provider<br/>(bank, escrow holder, custodian,<br/>transfer agent, title office)"]
   P -->|"reports"| SA
   SA -->|"observe / reconcile → external_observation events"| WF
@@ -39,7 +40,7 @@ The operations below are **interface semantics**: what each operation means and 
 
 ## Lifecycle
 
-The adapter lifecycle is mirrored in the workflow's `settlementRef.status`:
+The adapter lifecycle is observable through adapter results and `external_observation` events. The workflow's `settlementRef` is a **committed snapshot**, updated only through normal Novera state transitions; adapters never mutate it directly. In particular, `prepare()` and `validate()` occur while the workflow is `ready_for_settlement`, the validated snapshot is committed when the workflow is authorized into `settlement_pending`, and only then may `submit()` contact the provider in a committing way.
 
 ```mermaid
 stateDiagram-v2
@@ -71,9 +72,19 @@ stateDiagram-v2
 
 ## Relationship with NovaDeed
 
+The normative sequencing is:
+
+1. The confirmed workflow is `ready_for_settlement`.
+2. The adapter runs `prepare()` and `validate()`. Neither operation may commit funds or assets.
+3. The resulting validated instruction is reviewed under the workflow profile. A normal proposal → validation → confirmation → `state_transition` moves the workflow to `settlement_pending` and commits a `settlementRef` whose status is at least `validated`.
+4. Only after that transition may `submit()` hand the instruction to the provider.
+5. `submit()`, `observe()` and `reconcile()` produce adapter results and `external_observation` events. They do not directly mutate NovaDeed.
+6. A reconciled provider report can support a new proposal → validation → confirmation → `state_transition` to `completed`, whose committed `settlementRef.status` is `reconciled`.
+
 - A workflow in `settlement_pending` or `completed` MUST carry a `settlementRef` (schema-enforced).
+- A workflow in `settlement_pending` MUST NOT carry only a `prepared` settlement reference; the instruction must have passed `validate()` before the state is entered (schema-enforced).
 - A workflow MUST NOT be `completed` unless `settlementRef.status` is `reconciled` (schema-enforced).
-- Adapter operations never write workflow state. The adapter records `external_observation` events; workflow transitions still follow proposal, validation, confirmation and state transition, as in [event-model.md](event-model.md).
+- Adapter operations never write workflow state. Workflow changes still follow the event path in [event-model.md](event-model.md).
 - Settlement results that the authoritative system records, such as a registration receipt from a title office, are carried in `settlementRef.externalRefs` and as evidence.
 
 ## Requirements for implementations
