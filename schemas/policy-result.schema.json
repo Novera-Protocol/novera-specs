@@ -1,0 +1,128 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.noveraprotocol.org/v0.1/policy-result.schema.json",
+  "title": "Policy-result record",
+  "description": "Policy-result record (Novera Protocol Specification v0.1, pre-production). Records the result of evaluating one version of one policy against stated subjects, inputs and scope. v0.1 models results only; it does not define an autonomous compliance engine. A result is evidence of an evaluation, not a legal determination, legal advice or a regulatory approval.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "specVersion",
+    "recordType",
+    "policyResultId",
+    "resultAuthority",
+    "policyId",
+    "policyVersion",
+    "subjectRefs",
+    "result",
+    "reasonCodes",
+    "evidenceRefs",
+    "evaluationMethod",
+    "evaluatedBy",
+    "evaluatedAt",
+    "scope"
+  ],
+  "properties": {
+    "specVersion": { "description": "Specification version.", "$ref": "common.schema.json#/$defs/specVersion" },
+    "recordType": { "description": "Record type discriminator.", "const": "policy_result" },
+    "policyResultId": { "description": "Opaque policy-result identifier. Results are immutable; a re-evaluation creates a new result.", "$ref": "common.schema.json#/$defs/policyResultId" },
+    "resultAuthority": {
+      "description": "States that the record is an evaluation result, not a legal or regulatory determination.",
+      "const": "evaluation_result_not_legal_determination"
+    },
+    "policyId": { "description": "Namespaced policy identifier, for example novera-ref:real_estate.purchase.conditions.", "type": "string", "pattern": "^[a-z][a-z0-9-]{1,31}:[a-z][a-z0-9_.]{0,95}$" },
+    "policyVersion": { "description": "Semantic version of the policy definition evaluated.", "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+([-+][0-9A-Za-z.-]+)?$" },
+    "policyDigest": { "description": "Digest of the policy definition evaluated, so the evaluated logic can be identified exactly.", "$ref": "common.schema.json#/$defs/digest" },
+    "subjectRefs": {
+      "description": "Records the policy was evaluated against.",
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "common.schema.json#/$defs/subjectRef" }
+    },
+    "result": {
+      "description": "Overall result: pass, fail, indeterminate (inputs insufficient to decide), not_applicable (the policy does not apply to the subjects in scope), requires_review (a human or provider decision is required).",
+      "enum": ["pass", "fail", "indeterminate", "not_applicable", "requires_review"]
+    },
+    "reasonCodes": {
+      "description": "Machine-readable reasons for the result.",
+      "type": "array",
+      "items": { "$ref": "common.schema.json#/$defs/reasonCode" },
+      "uniqueItems": true
+    },
+    "conditions": {
+      "description": "Results for individual conditions within the policy, where the policy is composed of conditions.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/conditionResult" }
+    },
+    "evidenceRefs": {
+      "description": "Evidence relied on by the evaluation.",
+      "type": "array",
+      "items": { "$ref": "common.schema.json#/$defs/evidenceId" },
+      "uniqueItems": true
+    },
+    "inputStateRefs": {
+      "description": "Record versions the evaluation read. A result applies only to these versions.",
+      "type": "array",
+      "items": { "$ref": "common.schema.json#/$defs/stateRef" }
+    },
+    "inputsDigest": { "description": "Digest of the complete canonical evaluation input, allowing the evaluation to be reproduced.", "$ref": "common.schema.json#/$defs/digest" },
+    "evaluationMethod": {
+      "description": "How the result was produced: deterministic_rules (versioned rule logic), external_provider (output of an external provider), human_review (decision of an authorized person), hybrid (a combination, described by conditions). Jurisdiction-specific logic is expressed through the policy identity and scope.jurisdiction.",
+      "enum": ["deterministic_rules", "external_provider", "human_review", "hybrid"]
+    },
+    "evaluatedBy": {
+      "description": "Actor that produced the result. An assistive system MUST NOT be the evaluator of record.",
+      "allOf": [
+        { "$ref": "common.schema.json#/$defs/actorRef" },
+        { "properties": { "actorType": { "not": { "const": "assistive_system" } } } }
+      ]
+    },
+    "evaluatedAt": { "description": "When the evaluation was performed.", "$ref": "common.schema.json#/$defs/timestamp" },
+    "validUntil": { "description": "When the result lapses and MUST be re-evaluated before reliance.", "$ref": "common.schema.json#/$defs/timestamp" },
+    "scope": { "description": "Context within which the result applies. A result MUST NOT be relied on outside its scope.", "$ref": "common.schema.json#/$defs/scope" },
+    "supersedes": { "description": "Earlier result for the same policy and scope that this result replaces.", "$ref": "common.schema.json#/$defs/policyResultId" },
+    "metadata": { "description": "Namespaced, non-normative metadata.", "$ref": "common.schema.json#/$defs/metadata" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "result": { "enum": ["fail", "indeterminate", "requires_review"] } }, "required": ["result"] },
+      "then": { "properties": { "reasonCodes": { "minItems": 1 } } }
+    },
+    {
+      "if": { "properties": { "evaluationMethod": { "const": "deterministic_rules" } }, "required": ["evaluationMethod"] },
+      "then": { "required": ["inputsDigest"], "properties": { "evaluatedBy": { "properties": { "actorType": { "const": "system" } } } } }
+    },
+    {
+      "if": { "properties": { "evaluationMethod": { "const": "external_provider" } }, "required": ["evaluationMethod"] },
+      "then": { "properties": { "evaluatedBy": { "properties": { "actorType": { "const": "external_provider" } } } } }
+    },
+    {
+      "if": { "properties": { "evaluationMethod": { "const": "human_review" } }, "required": ["evaluationMethod"] },
+      "then": { "properties": { "evaluatedBy": { "properties": { "actorType": { "const": "participant" } } } } }
+    }
+  ],
+  "$defs": {
+    "conditionResult": {
+      "description": "Result for one condition of the policy.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["conditionId", "description", "result"],
+      "properties": {
+        "conditionId": { "description": "Condition identifier, unique within the policy version.", "$ref": "common.schema.json#/$defs/localKey" },
+        "description": { "description": "Plain description of the condition.", "type": "string", "minLength": 1, "maxLength": 280 },
+        "result": { "description": "Condition result.", "enum": ["pass", "fail", "indeterminate", "not_applicable", "requires_review"] },
+        "evidenceRefs": {
+          "description": "Evidence relied on for the condition.",
+          "type": "array",
+          "items": { "$ref": "common.schema.json#/$defs/evidenceId" },
+          "uniqueItems": true
+        },
+        "reasonCodes": {
+          "description": "Reasons for the condition result.",
+          "type": "array",
+          "items": { "$ref": "common.schema.json#/$defs/reasonCode" },
+          "uniqueItems": true
+        }
+      }
+    }
+  }
+}

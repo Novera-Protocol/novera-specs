@@ -1,0 +1,154 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.noveraprotocol.org/v0.1/evidence.schema.json",
+  "title": "Evidence record",
+  "description": "Evidence record (Novera Protocol Specification v0.1, pre-production). Evidence is referenceable independently of the state it supports. Novera MAY hold only a content hash and a reference rather than the underlying document. The existence of an evidence record does not imply that the evidence is authentic, legally sufficient or valid; authoritative confirmation may still be required.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "specVersion",
+    "recordType",
+    "evidenceId",
+    "version",
+    "evidenceType",
+    "subjectRefs",
+    "source",
+    "sourceType",
+    "contentHash",
+    "storage",
+    "issuerRef",
+    "observedAt",
+    "status",
+    "handling",
+    "createdAt",
+    "updatedAt"
+  ],
+  "properties": {
+    "specVersion": { "description": "Specification version.", "$ref": "common.schema.json#/$defs/specVersion" },
+    "recordType": { "description": "Record type discriminator.", "const": "evidence" },
+    "evidenceId": { "description": "Opaque evidence identifier.", "$ref": "common.schema.json#/$defs/evidenceId" },
+    "version": { "description": "Record version. Status changes create new versions; the contentHash of a version never changes.", "type": "integer", "minimum": 1 },
+    "evidenceType": {
+      "description": "Kind of evidence. Core values are listed; namespaced extension values are permitted.",
+      "anyOf": [
+        {
+          "enum": [
+            "identity_verification_report",
+            "financing_commitment",
+            "proof_of_funds",
+            "title_search_result",
+            "registry_extract",
+            "inspection_report",
+            "appraisal_report",
+            "signed_agreement",
+            "corporate_resolution",
+            "custody_statement",
+            "insurance_certificate",
+            "settlement_receipt",
+            "network_observation"
+          ]
+        },
+        { "$ref": "common.schema.json#/$defs/extensionToken" }
+      ]
+    },
+    "title": { "description": "Short, non-identifying title for the evidence. MUST NOT contain personal data.", "type": "string", "maxLength": 160 },
+    "subjectRefs": {
+      "description": "Records this evidence relates to. Evidence MAY relate to several records, for example a participant and a workflow.",
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "common.schema.json#/$defs/subjectRef" }
+    },
+    "source": { "description": "Name or role of the system or party from which the evidence was obtained.", "type": "string", "minLength": 1, "maxLength": 160 },
+    "sourceType": {
+      "description": "Kind of source: issuer_direct (delivered by the issuer), authoritative_registry (obtained from an authoritative registry), participant_upload, professional (provided by a professional acting in the workflow), adapter_observation (produced by an adapter), system_generated.",
+      "anyOf": [
+        { "enum": ["issuer_direct", "authoritative_registry", "participant_upload", "professional", "adapter_observation", "system_generated"] },
+        { "$ref": "common.schema.json#/$defs/extensionToken" }
+      ]
+    },
+    "contentHash": { "description": "Digest of the exact bytes of the evidence content. Consumers MUST verify retrieved content against this digest before relying on it.", "$ref": "common.schema.json#/$defs/digest" },
+    "mediaType": { "description": "IANA media type of the content, for example application/pdf.", "type": "string", "pattern": "^[a-z]+/[a-z0-9.+-]+$" },
+    "storage": {
+      "description": "Where the content is held: hash_only (Novera holds only the digest; the content stays with the source), external_reference (content retrievable at uri under the source's access control), deployment_store (held by the deployment under its own access control).",
+      "enum": ["hash_only", "external_reference", "deployment_store"]
+    },
+    "uri": { "description": "Locator for the content, when storage is external_reference or deployment_store. MUST NOT embed credentials, access tokens or personal data. Possessing the URI MUST NOT be sufficient to access confidential content.", "type": "string", "format": "uri" },
+    "issuerRef": { "description": "Issuer of the evidence.", "$ref": "common.schema.json#/$defs/issuer" },
+    "observedAt": { "description": "When Novera observed or received the evidence.", "$ref": "common.schema.json#/$defs/timestamp" },
+    "issuedAt": { "description": "When the issuer issued the evidence, if stated.", "$ref": "common.schema.json#/$defs/timestamp" },
+    "validFrom": { "description": "Start of validity stated by the issuer.", "$ref": "common.schema.json#/$defs/timestamp" },
+    "validUntil": { "description": "End of validity stated by the issuer.", "$ref": "common.schema.json#/$defs/timestamp" },
+    "status": {
+      "description": "Status of the evidence in the workflow: received (recorded, not reviewed), under_review, accepted (accepted for its stated purpose by an authorized reviewer), rejected, superseded (replaced by newer evidence), expired, revoked (withdrawn by the issuer). accepted is not a statement of authenticity or legal sufficiency.",
+      "enum": ["received", "under_review", "accepted", "rejected", "superseded", "expired", "revoked"]
+    },
+    "review": { "description": "Most recent review outcome.", "$ref": "#/$defs/review" },
+    "supersededBy": { "description": "Evidence that supersedes this record.", "$ref": "common.schema.json#/$defs/evidenceId" },
+    "handling": { "description": "Data-handling classification.", "$ref": "#/$defs/handling" },
+    "createdAt": { "description": "When the record was created.", "$ref": "common.schema.json#/$defs/timestamp" },
+    "updatedAt": { "description": "When the record was last changed.", "$ref": "common.schema.json#/$defs/timestamp" },
+    "metadata": { "description": "Namespaced, non-normative metadata.", "$ref": "common.schema.json#/$defs/metadata" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "storage": { "enum": ["external_reference", "deployment_store"] } }, "required": ["storage"] },
+      "then": { "required": ["uri"] }
+    },
+    {
+      "if": { "properties": { "storage": { "const": "hash_only" } }, "required": ["storage"] },
+      "then": { "not": { "required": ["uri"] } }
+    },
+    {
+      "if": { "properties": { "status": { "enum": ["accepted", "rejected"] } }, "required": ["status"] },
+      "then": { "required": ["review"] }
+    },
+    {
+      "if": { "properties": { "status": { "const": "superseded" } }, "required": ["status"] },
+      "then": { "required": ["supersededBy"] }
+    },
+    {
+      "if": { "properties": { "status": { "const": "expired" } }, "required": ["status"] },
+      "then": { "required": ["validUntil"] }
+    }
+  ],
+  "$defs": {
+    "review": {
+      "description": "Outcome of a review of the evidence for a stated purpose.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["reviewedBy", "reviewedAt", "outcome", "purpose"],
+      "properties": {
+        "reviewedBy": {
+          "description": "Reviewer. An assistive system MUST NOT be the reviewer of record.",
+          "allOf": [
+            { "$ref": "common.schema.json#/$defs/actorRef" },
+            { "properties": { "actorType": { "not": { "const": "assistive_system" } } } }
+          ]
+        },
+        "reviewedAt": { "description": "When the review was recorded.", "$ref": "common.schema.json#/$defs/timestamp" },
+        "outcome": { "description": "Review outcome.", "enum": ["accepted", "rejected"] },
+        "purpose": { "description": "Purpose for which the evidence was reviewed, for example real_estate.purchase.financing_condition.", "$ref": "common.schema.json#/$defs/reasonCode" },
+        "reasonCodes": {
+          "description": "Reasons for the outcome.",
+          "type": "array",
+          "items": { "$ref": "common.schema.json#/$defs/reasonCode" },
+          "uniqueItems": true
+        }
+      }
+    },
+    "handling": {
+      "description": "Data-handling classification of the content (not of this record).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["classification", "containsPersonalData"],
+      "properties": {
+        "classification": {
+          "description": "Confidentiality classification: public, internal, confidential or restricted.",
+          "enum": ["public", "internal", "confidential", "restricted"]
+        },
+        "containsPersonalData": { "description": "Whether the content contains personal data. When true, the content MUST NOT be published and storage SHOULD be hash_only or external_reference.", "type": "boolean" },
+        "retentionPolicy": { "description": "Namespaced retention policy identifier applied by the deployment.", "type": "string", "pattern": "^[a-z][a-z0-9-]{1,31}:[a-z][a-z0-9_.]{0,95}$" }
+      }
+    }
+  }
+}

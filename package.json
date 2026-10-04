@@ -1,0 +1,19 @@
+{
+  "name": "novera-specs",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Novera Protocol Specification v0.1 (pre-production design specification): schemas, synthetic examples and validation.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "validate": "node scripts/validate-schemas.mjs",
+    "test": "node --test \"tests/**/*.test.mjs\""
+  },
+  "devDependencies": {
+    "ajv": "^8.20.0",
+    "ajv-formats": "^3.0.1"
+  }
+}

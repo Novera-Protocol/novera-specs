@@ -1,0 +1,145 @@
+{
+  "specVersion": "0.1",
+  "recordType": "participant",
+  "participantId": "ptc_00n9zj6rk31yr783ez9eknn2gb",
+  "version": 5,
+  "recordAuthority": "non_authoritative_coordination_record",
+  "participantType": "individual",
+  "label": "Buyer A",
+  "claims": [
+    {
+      "claimId": "clm_3vgmnhyy46yft2me6sns8jhbs7",
+      "claimType": "identity",
+      "issuerId": "iss_6fyp9emm9w7n77xqrk7rwnqn72",
+      "scope": {
+        "contextType": "workflow",
+        "contextId": "wfl_0nd0m1dxe35ke860rweszzeq07",
+        "jurisdiction": "XZ",
+        "purpose": "real_estate.purchase"
+      },
+      "status": "confirmed",
+      "statement": "Identity checked by the identity provider against a government-issued document.",
+      "evidenceRefs": [
+        "evd_1ee478z7nkd48hr3m1heh89z8h"
+      ],
+      "provenance": {
+        "method": "provider_check",
+        "recordedBy": {
+          "actorType": "system",
+          "actorId": "sys_79vjfk2e5pe1z3tr0q29dn5jpr"
+        },
+        "recordedAt": "2026-03-05T11:58:00Z",
+        "providerReference": "idv-report-syn-7f3a"
+      },
+      "assertedAt": "2026-03-05T11:40:00Z",
+      "confirmedAt": "2026-03-05T11:58:00Z",
+      "validUntil": "2026-09-05T00:00:00Z"
+    },
+    {
+      "claimId": "clm_1gmk4fr4a09e7qkbvgbmfjzj8v",
+      "claimType": "financing_commitment",
+      "issuerId": "iss_4aggvqmjxt4ec9hementaqjrq5",
+      "scope": {
+        "contextType": "workflow",
+        "contextId": "wfl_0nd0m1dxe35ke860rweszzeq07",
+        "jurisdiction": "XZ",
+        "purpose": "real_estate.purchase"
+      },
+      "status": "confirmed",
+      "statement": "Lender issued a financing commitment for this purchase, subject to the lender's own conditions.",
+      "evidenceRefs": [
+        "evd_6qzypatqh3xrkvarhwv373sdn6"
+      ],
+      "provenance": {
+        "method": "document_review",
+        "recordedBy": {
+          "actorType": "participant",
+          "actorId": "ptc_0k1ef5z2tzfntg5a1m3ezctfbw",
+          "role": "buyer_counsel",
+          "onBehalfOf": "ptc_00n9zj6rk31yr783ez9eknn2gb"
+        },
+        "recordedAt": "2026-03-10T09:40:00Z"
+      },
+      "assertedAt": "2026-03-09T13:05:00Z",
+      "confirmedAt": "2026-03-10T09:40:00Z",
+      "validUntil": "2026-04-30T00:00:00Z"
+    },
+    {
+      "claimId": "clm_0t91x8xc2drxyt23fjdxcfshzv",
+      "claimType": "residence",
+      "issuerId": "iss_23agyd89k1bccfq2d6erba4h84",
+      "scope": {
+        "contextType": "workflow",
+        "contextId": "wfl_0nd0m1dxe35ke860rweszzeq07",
+        "jurisdiction": "XZ",
+        "purpose": "real_estate.purchase"
+      },
+      "status": "asserted",
+      "statement": "Participant states that it is resident in the jurisdiction of the property.",
+      "evidenceRefs": [],
+      "provenance": {
+        "method": "self_assertion",
+        "recordedBy": {
+          "actorType": "participant",
+          "actorId": "ptc_00n9zj6rk31yr783ez9eknn2gb",
+          "role": "buyer"
+        },
+        "recordedAt": "2026-03-04T10:05:00Z"
+      },
+      "assertedAt": "2026-03-04T10:05:00Z"
+    }
+  ],
+  "eligibilityStates": [
+    {
+      "scope": {
+        "contextType": "workflow",
+        "contextId": "wfl_0nd0m1dxe35ke860rweszzeq07",
+        "jurisdiction": "XZ",
+        "purpose": "real_estate.purchase.participant_eligibility"
+      },
+      "status": "eligible",
+      "basisClaimRefs": [
+        "clm_3vgmnhyy46yft2me6sns8jhbs7"
+      ],
+      "policyResultRefs": [
+        "plr_4ym5mwr5jjp8we7q4e0r8smjxn"
+      ],
+      "determinedBy": {
+        "actorType": "system",
+        "actorId": "sys_4ched9d92j9wsfytrfcck31kyn"
+      },
+      "determinedAt": "2026-03-05T12:10:00Z",
+      "validUntil": "2026-09-05T00:00:00Z"
+    }
+  ],
+  "evidenceRefs": [
+    "evd_1ee478z7nkd48hr3m1heh89z8h",
+    "evd_6qzypatqh3xrkvarhwv373sdn6"
+  ],
+  "issuerRefs": [
+    {
+      "issuerId": "iss_6fyp9emm9w7n77xqrk7rwnqn72",
+      "issuerType": "identity_provider",
+      "displayName": "Fictional Identity Verification Service (synthetic)",
+      "jurisdiction": "XZ"
+    },
+    {
+      "issuerId": "iss_4aggvqmjxt4ec9hementaqjrq5",
+      "issuerType": "financial_institution",
+      "displayName": "Fictional Lender (synthetic)",
+      "jurisdiction": "XZ"
+    },
+    {
+      "issuerId": "iss_23agyd89k1bccfq2d6erba4h84",
+      "issuerType": "self",
+      "displayName": "Participant (self-asserted)"
+    }
+  ],
+  "status": "active",
+  "createdAt": "2026-03-03T09:00:00Z",
+  "updatedAt": "2026-03-10T09:40:00Z",
+  "metadata": {
+    "novera:synthetic": true,
+    "novera:label": "SYNTHETIC EXAMPLE DATA"
+  }
+}

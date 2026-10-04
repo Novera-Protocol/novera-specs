@@ -1,0 +1,131 @@
+{
+  "specVersion": "0.1",
+  "recordType": "workflow",
+  "workflowId": "wfl_0nd0m1dxe35ke860rweszzeq07",
+  "version": 5,
+  "recordAuthority": "non_authoritative_coordination_record",
+  "workflowType": "purchase",
+  "workflowProfile": "novera-ref:real_estate.purchase.reference",
+  "workflowProfileVersion": "0.1.0",
+  "assetId": "ast_76g1t48b5szc3fnpfcbmj8m95z",
+  "participants": [
+    {
+      "participantId": "ptc_00n9zj6rk31yr783ez9eknn2gb",
+      "role": "buyer",
+      "status": "active",
+      "joinedAt": "2026-03-04T10:00:00Z"
+    },
+    {
+      "participantId": "ptc_0mwq2c5mjkxd8ms9kckfb725bv",
+      "role": "seller",
+      "status": "active",
+      "joinedAt": "2026-03-04T10:00:00Z"
+    },
+    {
+      "participantId": "ptc_0k1ef5z2tzfntg5a1m3ezctfbw",
+      "role": "buyer_counsel",
+      "status": "active",
+      "joinedAt": "2026-03-04T12:00:00Z"
+    }
+  ],
+  "controlState": {
+    "status": "change_agreed",
+    "recordedControllerRefs": [
+      "ptc_0mwq2c5mjkxd8ms9kckfb725bv"
+    ],
+    "proposedControllerRefs": [
+      "ptc_00n9zj6rk31yr783ez9eknn2gb"
+    ],
+    "basis": "authoritative_reference",
+    "authoritativeRefKey": "land-title",
+    "observedAt": "2026-03-07T15:10:00Z"
+  },
+  "workflowState": "approved",
+  "policyRefs": [
+    {
+      "policyId": "novera-ref:real_estate.purchase.participant_eligibility",
+      "policyVersion": "0.1.0",
+      "requiredFor": [
+        "under_review"
+      ],
+      "resultRefs": [
+        "plr_4ym5mwr5jjp8we7q4e0r8smjxn"
+      ]
+    },
+    {
+      "policyId": "novera-ref:real_estate.purchase.conditions",
+      "policyVersion": "0.1.0",
+      "requiredFor": [
+        "approved"
+      ],
+      "resultRefs": [
+        "plr_23jrsnnbaxhmstbp9see4r16rm"
+      ]
+    }
+  ],
+  "evidenceRefs": [
+    "evd_3yezypxqem9fmhsy6gr4hp44k2",
+    "evd_6qzypatqh3xrkvarhwv373sdn6",
+    "evd_0nm225t6aydft7a7021c48bdq6",
+    "evd_728ykdj0ambpba3d1c0qmhgmh7"
+  ],
+  "transitions": [
+    {
+      "sequence": 1,
+      "from": null,
+      "to": "draft",
+      "eventId": "evt_0qsv2d4thpggn2bp2bgy27mmfm",
+      "transitionedAt": "2026-03-04T10:00:00Z",
+      "reasonCodes": [
+        "workflow.created"
+      ]
+    },
+    {
+      "sequence": 2,
+      "from": "draft",
+      "to": "proposed",
+      "eventId": "evt_24f6b2nrnb933j1aw61476fkrc",
+      "transitionedAt": "2026-03-04T15:30:00Z",
+      "reasonCodes": [
+        "offer.submitted"
+      ]
+    },
+    {
+      "sequence": 3,
+      "from": "proposed",
+      "to": "under_review",
+      "eventId": "evt_01rw4ezgkk3fjcw1fmar884ref",
+      "transitionedAt": "2026-03-05T11:00:00Z",
+      "reasonCodes": [
+        "offer.received_by_seller"
+      ]
+    },
+    {
+      "sequence": 4,
+      "from": "under_review",
+      "to": "conditions_pending",
+      "eventId": "evt_374xchx0a62gjj2w1y26pk1qz9",
+      "transitionedAt": "2026-03-06T09:15:00Z",
+      "reasonCodes": [
+        "offer.accepted_conditionally"
+      ]
+    },
+    {
+      "sequence": 5,
+      "from": "conditions_pending",
+      "to": "approved",
+      "eventId": "evt_6gadxaerwg7knv9e4ptkpk3ddn",
+      "transitionedAt": "2026-03-12T10:00:02Z",
+      "reasonCodes": [
+        "conditions.all_met"
+      ]
+    }
+  ],
+  "settlementRef": null,
+  "createdAt": "2026-03-04T10:00:00Z",
+  "updatedAt": "2026-03-12T10:00:02Z",
+  "metadata": {
+    "novera:synthetic": true,
+    "novera:label": "SYNTHETIC EXAMPLE DATA"
+  }
+}

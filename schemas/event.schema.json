@@ -1,0 +1,217 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.noveraprotocol.org/v0.1/event.schema.json",
+  "title": "NoveraEvent",
+  "description": "NoveraEvent (Novera Protocol Specification v0.1, pre-production). A protocol-level record of a proposal, validation, confirmation, rejection, state transition or external observation concerning one Novera record. A proposal is not a state change: the current state of a record changes only through a state_transition event, and only state_transition events carry confirmedStateRef. Events do not imply blockchain or legal finality; persistence MAY later involve one or more storage or network adapters.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "specVersion",
+    "recordType",
+    "eventId",
+    "eventType",
+    "subjectType",
+    "subjectId",
+    "actorRef",
+    "evidenceRefs",
+    "policyResultRefs",
+    "provenance",
+    "timestamp"
+  ],
+  "properties": {
+    "specVersion": { "description": "Specification version.", "$ref": "common.schema.json#/$defs/specVersion" },
+    "recordType": { "description": "Record type discriminator.", "const": "event" },
+    "eventId": { "description": "Opaque event identifier. Implementations MUST reject a second event with an eventId they have already accepted.", "$ref": "common.schema.json#/$defs/eventId" },
+    "eventType": {
+      "description": "Kind of event. Closed vocabulary, because authority rules depend on it; new event types require a specification revision. proposal: a requested state, with no effect on current state. validation: policy evaluation of a proposal. confirmation: an authorized actor approves a proposed state; current state is unchanged until a state_transition is recorded. rejection: a proposal is declined or fails validation. state_transition: the confirmed state becomes the record's current state. external_observation: an adapter or external provider reports a fact from outside Novera.",
+      "enum": ["proposal", "validation", "confirmation", "rejection", "state_transition", "external_observation"]
+    },
+    "subjectType": { "description": "Type of the record the event concerns.", "$ref": "common.schema.json#/$defs/subjectType" },
+    "subjectId": { "description": "Opaque identifier of the record the event concerns. The prefix MUST match subjectType.", "$ref": "common.schema.json#/$defs/opaqueId" },
+    "workflowId": { "description": "NovaDeed workflow in whose context the event occurred, when the subject is not itself that workflow.", "$ref": "common.schema.json#/$defs/workflowId" },
+    "actorRef": { "description": "Actor responsible for the event. Which actor types may emit which event types is constrained below.", "$ref": "common.schema.json#/$defs/actorRef" },
+    "previousStateRef": {
+      "description": "Version of the subject the event is based on, or null when the event concerns creation of the subject. Implementations MUST reject a proposal or state_transition whose previousStateRef is not the subject's current version, which prevents stale and replayed transitions.",
+      "oneOf": [{ "type": "null" }, { "$ref": "common.schema.json#/$defs/stateRef" }]
+    },
+    "proposedStateRef": { "description": "State requested by a proposal, or the proposed state that a validation, confirmation or rejection concerns.", "$ref": "common.schema.json#/$defs/stateRef" },
+    "confirmedStateRef": { "description": "State that became the subject's current state. Present only on state_transition events.", "$ref": "common.schema.json#/$defs/stateRef" },
+    "causedBy": {
+      "description": "Earlier events this event responds to or depends on, for example the proposal a confirmation approves.",
+      "type": "array",
+      "items": { "$ref": "common.schema.json#/$defs/eventId" },
+      "uniqueItems": true
+    },
+    "evidenceRefs": {
+      "description": "Evidence relied on by the event.",
+      "type": "array",
+      "items": { "$ref": "common.schema.json#/$defs/evidenceId" },
+      "uniqueItems": true
+    },
+    "policyResultRefs": {
+      "description": "Policy results relied on by the event.",
+      "type": "array",
+      "items": { "$ref": "common.schema.json#/$defs/policyResultId" },
+      "uniqueItems": true
+    },
+    "reasonCodes": {
+      "description": "Machine-readable reasons, REQUIRED for rejections.",
+      "type": "array",
+      "items": { "$ref": "common.schema.json#/$defs/reasonCode" },
+      "uniqueItems": true
+    },
+    "confidence": { "description": "Producer-reported confidence, REQUIRED when the actor is an assistive system. Informational only.", "$ref": "common.schema.json#/$defs/confidence" },
+    "provenance": { "description": "How the event came to be recorded.", "$ref": "#/$defs/provenance" },
+    "idempotencyKey": {
+      "description": "Optional producer-supplied key. Implementations SHOULD treat a repeated key from the same actor as a retry of the same request and MUST NOT apply it twice.",
+      "type": "string",
+      "pattern": "^[A-Za-z0-9._:-]{8,128}$"
+    },
+    "timestamp": { "description": "When the event was recorded by the implementation. Not a statement of legal effective time or network finality.", "$ref": "common.schema.json#/$defs/timestamp" },
+    "metadata": { "description": "Namespaced, non-normative metadata.", "$ref": "common.schema.json#/$defs/metadata" }
+  },
+  "allOf": [
+    { "$ref": "common.schema.json#/$defs/subjectIdBinding" },
+    {
+      "description": "Only state_transition events carry confirmedStateRef.",
+      "if": { "properties": { "eventType": { "const": "state_transition" } }, "required": ["eventType"] },
+      "then": { "required": ["previousStateRef", "confirmedStateRef", "causedBy"], "properties": { "causedBy": { "minItems": 1 } } },
+      "else": { "not": { "required": ["confirmedStateRef"] } }
+    },
+    {
+      "description": "A state transition is applied by a deterministic Novera system component.",
+      "if": { "properties": { "eventType": { "const": "state_transition" } }, "required": ["eventType"] },
+      "then": { "properties": { "actorRef": { "properties": { "actorType": { "const": "system" } } } } }
+    },
+    {
+      "description": "A proposal names the requested state and the version it is based on.",
+      "if": { "properties": { "eventType": { "const": "proposal" } }, "required": ["eventType"] },
+      "then": {
+        "required": ["previousStateRef", "proposedStateRef"],
+        "properties": { "actorRef": { "properties": { "actorType": { "enum": ["participant", "system", "assistive_system", "external_provider"] } } } }
+      }
+    },
+    {
+      "description": "A validation cites at least one policy result for a stated proposal.",
+      "if": { "properties": { "eventType": { "const": "validation" } }, "required": ["eventType"] },
+      "then": {
+        "required": ["proposedStateRef", "causedBy"],
+        "properties": {
+          "causedBy": { "minItems": 1 },
+          "policyResultRefs": { "minItems": 1 },
+          "actorRef": { "properties": { "actorType": { "enum": ["system", "external_provider", "participant"] } } }
+        }
+      }
+    },
+    {
+      "description": "A confirmation approves a stated proposal and is made by an authorized participant, an external provider or a deterministic system component.",
+      "if": { "properties": { "eventType": { "const": "confirmation" } }, "required": ["eventType"] },
+      "then": {
+        "required": ["proposedStateRef", "causedBy"],
+        "properties": {
+          "causedBy": { "minItems": 1 },
+          "actorRef": { "properties": { "actorType": { "enum": ["participant", "external_provider", "system"] } } }
+        }
+      }
+    },
+    {
+      "description": "A rejection states its reasons.",
+      "if": { "properties": { "eventType": { "const": "rejection" } }, "required": ["eventType"] },
+      "then": {
+        "required": ["causedBy", "reasonCodes"],
+        "properties": {
+          "causedBy": { "minItems": 1 },
+          "reasonCodes": { "minItems": 1 },
+          "actorRef": { "properties": { "actorType": { "enum": ["participant", "external_provider", "system"] } } }
+        }
+      }
+    },
+    {
+      "description": "An external observation reports an outside fact; it neither proposes nor applies state.",
+      "if": { "properties": { "eventType": { "const": "external_observation" } }, "required": ["eventType"] },
+      "then": {
+        "not": { "anyOf": [{ "required": ["proposedStateRef"] }, { "required": ["confirmedStateRef"] }] },
+        "properties": {
+          "actorRef": { "properties": { "actorType": { "enum": ["adapter", "external_provider"] } } },
+          "provenance": { "required": ["sourceRef"] }
+        }
+      }
+    },
+    {
+      "description": "An assistive system may only propose, must report confidence, and must disclose extraction provenance.",
+      "if": { "properties": { "actorRef": { "properties": { "actorType": { "const": "assistive_system" } }, "required": ["actorType"] } }, "required": ["actorRef"] },
+      "then": {
+        "required": ["confidence"],
+        "properties": {
+          "eventType": { "const": "proposal" },
+          "provenance": { "required": ["extraction"], "properties": { "channel": { "const": "assistive_extraction" } } }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "provenance": {
+      "description": "Provenance of the event.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["channel"],
+      "properties": {
+        "channel": {
+          "description": "How the event originated: direct_action (an actor acted through an authenticated interface), policy_evaluation, external_report (an external provider reported), adapter_observation, assistive_extraction (a non-authoritative assistive system produced it), system_process (a deterministic system process produced it).",
+          "enum": ["direct_action", "policy_evaluation", "external_report", "adapter_observation", "assistive_extraction", "system_process"]
+        },
+        "sourceRef": {
+          "description": "Opaque reference to the originating external record or report, such as a provider's report identifier. MUST NOT contain personal data or credentials.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "networkRefs": {
+          "description": "Network references associated with the event, when an adapter observed or anchored it.",
+          "type": "array",
+          "items": { "$ref": "common.schema.json#/$defs/networkRef" }
+        },
+        "extraction": { "description": "Extraction details, REQUIRED when the actor is an assistive system.", "$ref": "#/$defs/extraction" }
+      }
+    },
+    "extraction": {
+      "description": "Details of an assistive extraction. Describes what produced a proposal; it confers no authority.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["method", "modelIdentifier", "inputEvidenceRefs"],
+      "properties": {
+        "method": {
+          "description": "Extraction method.",
+          "anyOf": [
+            { "enum": ["document_extraction", "classification", "summarization", "inconsistency_detection"] },
+            { "$ref": "common.schema.json#/$defs/extensionToken" }
+          ]
+        },
+        "modelIdentifier": { "description": "Identifier and version of the model or component that produced the output.", "type": "string", "minLength": 1, "maxLength": 128 },
+        "inputEvidenceRefs": {
+          "description": "Evidence the extraction read. Every proposed value MUST be traceable to these inputs.",
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "common.schema.json#/$defs/evidenceId" },
+          "uniqueItems": true
+        },
+        "fieldProvenance": {
+          "description": "Per-field provenance for proposed values.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "description": "Provenance of one proposed field value.",
+            "additionalProperties": false,
+            "required": ["path", "evidenceId", "confidence"],
+            "properties": {
+              "path": { "description": "RFC 6901 JSON Pointer to the proposed field within the proposed record.", "type": "string", "pattern": "^(/([^~/]|~[01])*)*$" },
+              "evidenceId": { "description": "Evidence the value was extracted from.", "$ref": "common.schema.json#/$defs/evidenceId" },
+              "locator": { "description": "Location within the evidence, such as page 3 or section 2.1.", "type": "string", "maxLength": 128 },
+              "confidence": { "description": "Confidence for this field.", "$ref": "common.schema.json#/$defs/confidence" }
+            }
+          }
+        }
+      }
+    }
+  }
+}

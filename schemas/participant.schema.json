@@ -1,0 +1,212 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.noveraprotocol.org/v0.1/participant.schema.json",
+  "title": "NovaID participant record",
+  "description": "NovaID participant record (Novera Protocol Specification v0.1, pre-production). Represents a participant and the claims and scoped eligibility states associated with Novera workflows. NovaID is not an identity provider: claims are issued by external providers or by the participant itself, and confirmation may depend on those providers. The record MUST NOT contain direct identifiers of natural persons (names, government identifier numbers, dates of birth, addresses); such data stays with the issuer and is referenced through evidence.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "specVersion",
+    "recordType",
+    "participantId",
+    "version",
+    "recordAuthority",
+    "participantType",
+    "claims",
+    "eligibilityStates",
+    "evidenceRefs",
+    "issuerRefs",
+    "status",
+    "createdAt",
+    "updatedAt"
+  ],
+  "properties": {
+    "specVersion": { "description": "Specification version.", "$ref": "common.schema.json#/$defs/specVersion" },
+    "recordType": { "description": "Record type discriminator. Guards against schema and record-type confusion.", "const": "participant" },
+    "participantId": { "description": "Opaque participant identifier. MUST NOT be a network address or any other network-specific identifier.", "$ref": "common.schema.json#/$defs/participantId" },
+    "version": { "description": "Record version. Starts at 1 and increases by exactly 1 for each confirmed change.", "type": "integer", "minimum": 1 },
+    "recordAuthority": {
+      "description": "States that this is a coordination record maintained by a Novera implementation. It is not an identity credential, and it is not an authoritative identity or eligibility record.",
+      "const": "non_authoritative_coordination_record"
+    },
+    "participantType": {
+      "description": "Category of participant. Core values are listed; namespaced extension values are permitted.",
+      "anyOf": [
+        { "enum": ["individual", "organization", "institution", "service_provider", "system"] },
+        { "$ref": "common.schema.json#/$defs/extensionToken" }
+      ]
+    },
+    "label": {
+      "description": "Optional non-identifying label used within a workflow, for example Buyer A. MUST NOT contain a natural person's name or other direct identifier.",
+      "type": "string",
+      "maxLength": 96
+    },
+    "claims": {
+      "description": "Claims about the participant. Each claim is attributable to an issuer, bound to a scope and carries its own status and provenance.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/claim" }
+    },
+    "eligibilityStates": {
+      "description": "Eligibility states. Each is scoped to a workflow or other context and is not reusable outside that scope.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/eligibilityState" }
+    },
+    "evidenceRefs": {
+      "description": "Evidence associated with the participant record as a whole.",
+      "type": "array",
+      "items": { "$ref": "common.schema.json#/$defs/evidenceId" },
+      "uniqueItems": true
+    },
+    "issuerRefs": {
+      "description": "Issuers referenced by claims in this record. Every claim issuerId MUST appear here.",
+      "type": "array",
+      "items": { "$ref": "common.schema.json#/$defs/issuer" }
+    },
+    "status": {
+      "description": "Lifecycle status of the participant record within the deployment: active, suspended (participation paused pending review) or closed. This is not a statement about the participant's legal standing.",
+      "enum": ["active", "suspended", "closed"]
+    },
+    "createdAt": { "description": "When the record was created.", "$ref": "common.schema.json#/$defs/timestamp" },
+    "updatedAt": { "description": "When the record was last changed.", "$ref": "common.schema.json#/$defs/timestamp" },
+    "metadata": { "description": "Namespaced, non-normative metadata.", "$ref": "common.schema.json#/$defs/metadata" }
+  },
+  "$defs": {
+    "claim": {
+      "description": "A statement about the participant made by an issuer, for a stated scope. A confirmed claim means the issuer's assertion was confirmed through the cited evidence for that scope. It is not a global or permanent statement of truth.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["claimId", "claimType", "issuerId", "scope", "status", "statement", "evidenceRefs", "provenance", "assertedAt"],
+      "properties": {
+        "claimId": { "description": "Opaque claim identifier, unique within the deployment.", "$ref": "common.schema.json#/$defs/claimId" },
+        "claimType": {
+          "description": "Kind of claim. Core values are listed; namespaced extension values are permitted.",
+          "anyOf": [
+            {
+              "enum": [
+                "identity",
+                "legal_entity_status",
+                "residence",
+                "sanctions_screening",
+                "investor_qualification",
+                "authority_to_act",
+                "proof_of_funds",
+                "financing_commitment",
+                "professional_licence"
+              ]
+            },
+            { "$ref": "common.schema.json#/$defs/extensionToken" }
+          ]
+        },
+        "issuerId": { "description": "Issuer of the claim. MUST reference an entry in issuerRefs.", "$ref": "common.schema.json#/$defs/issuerId" },
+        "scope": { "description": "Context to which the claim applies.", "$ref": "common.schema.json#/$defs/scope" },
+        "status": {
+          "description": "Claim status: asserted (stated, not yet checked), pending (check requested from the issuer or provider), confirmed (confirmed by the issuer or an authorized reviewer for the scope), rejected (the check failed or was declined), expired (past validUntil), revoked (withdrawn by the issuer or an authorized party). Self-issued claims cannot be confirmed by the participant alone.",
+          "enum": ["asserted", "pending", "confirmed", "rejected", "expired", "revoked"]
+        },
+        "statement": {
+          "description": "Short, non-identifying description of what is claimed, for example: Identity checked against a government-issued document. MUST NOT contain the underlying personal data.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 280
+        },
+        "valueDigest": {
+          "description": "Optional digest that commits to the claimed value without revealing it. The salt and value remain with the issuer or the participant.",
+          "$ref": "common.schema.json#/$defs/digest"
+        },
+        "evidenceRefs": {
+          "description": "Evidence supporting the claim.",
+          "type": "array",
+          "items": { "$ref": "common.schema.json#/$defs/evidenceId" },
+          "uniqueItems": true
+        },
+        "provenance": { "description": "How the claim entered the record.", "$ref": "#/$defs/claimProvenance" },
+        "assertedAt": { "description": "When the claim was first asserted.", "$ref": "common.schema.json#/$defs/timestamp" },
+        "confirmedAt": { "description": "When the claim reached confirmed status.", "$ref": "common.schema.json#/$defs/timestamp" },
+        "validFrom": { "description": "Start of the claim's validity, where the issuer defines one.", "$ref": "common.schema.json#/$defs/timestamp" },
+        "validUntil": { "description": "End of the claim's validity, where the issuer defines one.", "$ref": "common.schema.json#/$defs/timestamp" },
+        "statusReasonCodes": {
+          "description": "Reasons for the current status, particularly for rejected, expired and revoked.",
+          "type": "array",
+          "items": { "$ref": "common.schema.json#/$defs/reasonCode" },
+          "uniqueItems": true
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "status": { "const": "confirmed" } }, "required": ["status"] },
+          "then": { "required": ["confirmedAt"], "properties": { "evidenceRefs": { "minItems": 1 } } }
+        },
+        {
+          "if": { "properties": { "status": { "const": "expired" } }, "required": ["status"] },
+          "then": { "required": ["validUntil"] }
+        },
+        {
+          "if": { "properties": { "status": { "enum": ["rejected", "revoked"] } }, "required": ["status"] },
+          "then": { "required": ["statusReasonCodes"], "properties": { "statusReasonCodes": { "minItems": 1 } } }
+        }
+      ]
+    },
+    "claimProvenance": {
+      "description": "Provenance of a claim.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["method", "recordedBy", "recordedAt"],
+      "properties": {
+        "method": {
+          "description": "How the claim was obtained. Core values are listed; namespaced extension values are permitted.",
+          "anyOf": [
+            { "enum": ["provider_check", "document_review", "registry_query", "self_assertion", "professional_attestation"] },
+            { "$ref": "common.schema.json#/$defs/extensionToken" }
+          ]
+        },
+        "recordedBy": { "description": "Actor that recorded the claim in the participant record.", "$ref": "common.schema.json#/$defs/actorRef" },
+        "recordedAt": { "description": "When the claim was recorded.", "$ref": "common.schema.json#/$defs/timestamp" },
+        "providerReference": {
+          "description": "Opaque reference to the provider's own record of the check, if the provider supplies one. MUST NOT contain personal data.",
+          "type": "string",
+          "maxLength": 256
+        }
+      }
+    },
+    "eligibilityState": {
+      "description": "Eligibility of the participant for a specific scope, as determined by a policy evaluation or an authorized reviewer. Eligibility is never global.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scope", "status", "basisClaimRefs", "policyResultRefs", "determinedBy", "determinedAt"],
+      "properties": {
+        "scope": { "description": "Context to which the eligibility state applies.", "$ref": "common.schema.json#/$defs/scope" },
+        "status": {
+          "description": "Eligibility status for the scope: pending, eligible, not_eligible, requires_review, expired or revoked.",
+          "enum": ["pending", "eligible", "not_eligible", "requires_review", "expired", "revoked"]
+        },
+        "basisClaimRefs": {
+          "description": "Claims in this record that the determination relied on.",
+          "type": "array",
+          "items": { "$ref": "common.schema.json#/$defs/claimId" },
+          "uniqueItems": true
+        },
+        "policyResultRefs": {
+          "description": "Policy results the determination relied on.",
+          "type": "array",
+          "items": { "$ref": "common.schema.json#/$defs/policyResultId" },
+          "uniqueItems": true
+        },
+        "determinedBy": {
+          "description": "Actor that recorded the determination. An assistive system MUST NOT determine eligibility.",
+          "allOf": [
+            { "$ref": "common.schema.json#/$defs/actorRef" },
+            { "properties": { "actorType": { "not": { "const": "assistive_system" } } } }
+          ]
+        },
+        "determinedAt": { "description": "When the determination was recorded.", "$ref": "common.schema.json#/$defs/timestamp" },
+        "validUntil": { "description": "When the determination lapses, if it lapses.", "$ref": "common.schema.json#/$defs/timestamp" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "status": { "enum": ["eligible", "not_eligible"] } }, "required": ["status"] },
+          "then": { "properties": { "policyResultRefs": { "minItems": 1 } } }
+        }
+      ]
+    }
+  }
+}

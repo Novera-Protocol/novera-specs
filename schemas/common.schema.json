@@ -1,0 +1,371 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.noveraprotocol.org/v0.1/common.schema.json",
+  "title": "Novera Protocol v0.1 shared definitions",
+  "description": "Reusable definitions referenced by every Novera Protocol v0.1 record schema. This document defines no record of its own. The $id is a stable canonical identifier; it is not a statement that a hosted schema service is available at that URL.",
+  "$defs": {
+    "specVersion": {
+      "description": "Specification version the record conforms to. Producers MUST set this value; consumers MUST reject records whose specVersion they do not support.",
+      "const": "0.1"
+    },
+    "opaqueId": {
+      "description": "Opaque Novera protocol identifier: a three-letter type prefix, an underscore, and 26 lowercase Crockford base32 characters (128 bits of entropy or a time-ordered value of equal length). Consumers MUST NOT parse meaning from the body. Network addresses, token identifiers and transaction hashes MUST NOT be used as opaque identifiers.",
+      "type": "string",
+      "pattern": "^[a-z]{3}_[0-7][0-9a-hjkmnp-tv-z]{25}$"
+    },
+    "participantId": {
+      "description": "Opaque identifier of a NovaID participant record.",
+      "type": "string",
+      "pattern": "^ptc_[0-7][0-9a-hjkmnp-tv-z]{25}$"
+    },
+    "assetId": {
+      "description": "Opaque identifier of a NovaRegistry asset record.",
+      "type": "string",
+      "pattern": "^ast_[0-7][0-9a-hjkmnp-tv-z]{25}$"
+    },
+    "workflowId": {
+      "description": "Opaque identifier of a NovaDeed workflow record.",
+      "type": "string",
+      "pattern": "^wfl_[0-7][0-9a-hjkmnp-tv-z]{25}$"
+    },
+    "evidenceId": {
+      "description": "Opaque identifier of an evidence record.",
+      "type": "string",
+      "pattern": "^evd_[0-7][0-9a-hjkmnp-tv-z]{25}$"
+    },
+    "policyResultId": {
+      "description": "Opaque identifier of a policy-result record.",
+      "type": "string",
+      "pattern": "^plr_[0-7][0-9a-hjkmnp-tv-z]{25}$"
+    },
+    "eventId": {
+      "description": "Opaque identifier of a NoveraEvent.",
+      "type": "string",
+      "pattern": "^evt_[0-7][0-9a-hjkmnp-tv-z]{25}$"
+    },
+    "claimId": {
+      "description": "Opaque identifier of a claim held within a NovaID participant record.",
+      "type": "string",
+      "pattern": "^clm_[0-7][0-9a-hjkmnp-tv-z]{25}$"
+    },
+    "issuerId": {
+      "description": "Opaque identifier of a claim or evidence issuer, such as an identity provider, financial institution, professional or the participant itself.",
+      "type": "string",
+      "pattern": "^iss_[0-7][0-9a-hjkmnp-tv-z]{25}$"
+    },
+    "systemId": {
+      "description": "Opaque identifier of a software system acting within a Novera deployment, such as a workflow engine, a policy evaluator or a future assistive system.",
+      "type": "string",
+      "pattern": "^sys_[0-7][0-9a-hjkmnp-tv-z]{25}$"
+    },
+    "adapterId": {
+      "description": "Opaque identifier of a configured settlement or network adapter instance.",
+      "type": "string",
+      "pattern": "^adp_[0-7][0-9a-hjkmnp-tv-z]{25}$"
+    },
+    "localKey": {
+      "description": "Key that is unique only within the enclosing record, used to cross-reference entries inside that record.",
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+    },
+    "timestamp": {
+      "description": "RFC 3339 date-time with an explicit offset. UTC (suffix Z) is RECOMMENDED. Timestamps record when an assertion was made; they do not establish legal effective dates.",
+      "type": "string",
+      "format": "date-time"
+    },
+    "extensionToken": {
+      "description": "Namespaced extension value of the form <namespace>:<value>, for vocabulary not defined by this specification. Namespaces SHOULD identify the defining organization or profile. Extension values MUST NOT redefine the meaning of a core value.",
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{1,31}:[a-z][a-z0-9_]{0,63}$"
+    },
+    "reasonCode": {
+      "description": "Machine-readable reason code. Dot-separated lowercase segments, optionally namespaced (for example conditions.all_met or acme:manual_hold).",
+      "type": "string",
+      "pattern": "^([a-z][a-z0-9-]{1,31}:)?[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)*$",
+      "maxLength": 128
+    },
+    "jurisdiction": {
+      "description": "ISO 3166-1 alpha-2 country code, optionally followed by an ISO 3166-2 subdivision suffix (for example CA or CA-ON). Synthetic examples use the user-assigned code XZ to avoid implying a real jurisdiction.",
+      "type": "string",
+      "pattern": "^[A-Z]{2}(-[A-Z0-9]{1,3})?$"
+    },
+    "confidence": {
+      "description": "Producer-reported confidence between 0 and 1. Confidence is informational; it never substitutes for validation or confirmation.",
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "scope": {
+      "description": "Context to which a claim, eligibility state or policy result applies. Scoped statements MUST NOT be reused outside their scope. There is deliberately no global scope: no Novera statement is an unqualified truth about a participant or asset.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["contextType", "purpose"],
+      "properties": {
+        "contextType": {
+          "description": "Kind of context: workflow (one NovaDeed workflow), asset (one NovaRegistry asset), program (a named program or offering defined by an operator), deployment (one Novera deployment and its operator rules).",
+          "anyOf": [
+            { "enum": ["workflow", "asset", "program", "deployment"] },
+            { "$ref": "#/$defs/extensionToken" }
+          ]
+        },
+        "contextId": {
+          "description": "Identifier of the context. REQUIRED when contextType is workflow or asset.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "jurisdiction": { "description": "Jurisdiction whose rules the statement was made under, where relevant.", "$ref": "#/$defs/jurisdiction" },
+        "purpose": { "description": "Purpose for which the statement was made, for example real_estate.purchase.", "$ref": "#/$defs/reasonCode" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "contextType": { "const": "workflow" } }, "required": ["contextType"] },
+          "then": { "required": ["contextId"], "properties": { "contextId": { "$ref": "#/$defs/workflowId" } } }
+        },
+        {
+          "if": { "properties": { "contextType": { "const": "asset" } }, "required": ["contextType"] },
+          "then": { "required": ["contextId"], "properties": { "contextId": { "$ref": "#/$defs/assetId" } } }
+        }
+      ]
+    },
+    "digest": {
+      "description": "Cryptographic digest of content or of a canonicalized record. Lowercase hexadecimal. SHA-256 is RECOMMENDED for v0.1.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["algorithm", "value"],
+      "properties": {
+        "algorithm": {
+          "description": "Digest algorithm.",
+          "enum": ["sha-256", "sha-384", "sha-512", "sha3-256"]
+        },
+        "value": {
+          "description": "Lowercase hexadecimal digest value whose length matches the algorithm.",
+          "type": "string",
+          "pattern": "^[0-9a-f]+$"
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "algorithm": { "enum": ["sha-256", "sha3-256"] } } },
+          "then": { "properties": { "value": { "minLength": 64, "maxLength": 64 } } }
+        },
+        {
+          "if": { "properties": { "algorithm": { "const": "sha-384" } } },
+          "then": { "properties": { "value": { "minLength": 96, "maxLength": 96 } } }
+        },
+        {
+          "if": { "properties": { "algorithm": { "const": "sha-512" } } },
+          "then": { "properties": { "value": { "minLength": 128, "maxLength": 128 } } }
+        }
+      ]
+    },
+    "metadata": {
+      "description": "Non-normative, namespaced metadata. Keys MUST be namespaced (<namespace>:<key>). Metadata MUST NOT carry personal data, secrets or state that affects protocol semantics. The novera namespace is reserved by this specification.",
+      "type": "object",
+      "propertyNames": { "pattern": "^[a-z][a-z0-9-]{1,31}:[A-Za-z0-9._-]{1,64}$" },
+      "properties": {
+        "novera:synthetic": {
+          "description": "True when the record is synthetic example or test data and describes no real person, organization, asset or transaction.",
+          "type": "boolean"
+        },
+        "novera:label": {
+          "description": "Human-readable label. Synthetic examples MUST use the label SYNTHETIC EXAMPLE DATA.",
+          "type": "string",
+          "maxLength": 128
+        }
+      },
+      "additionalProperties": true
+    },
+    "actorType": {
+      "description": "Category of actor. Closed vocabulary, because authority rules depend on it: participant (a NovaID participant), system (a deterministic Novera system component), assistive_system (a non-authoritative assistive component such as future Novera Intelligence), external_provider (an external issuer or provider), adapter (a settlement or network adapter).",
+      "enum": ["participant", "system", "assistive_system", "external_provider", "adapter"]
+    },
+    "actorRef": {
+      "description": "Reference to the actor responsible for an event, evaluation or review. Authentication of the actor is the responsibility of the implementation and is not established by this reference alone.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["actorType", "actorId"],
+      "properties": {
+        "actorType": { "description": "Category of actor.", "$ref": "#/$defs/actorType" },
+        "actorId": { "description": "Opaque identifier of the actor. The prefix MUST match actorType.", "$ref": "#/$defs/opaqueId" },
+        "role": {
+          "description": "Role in which the actor acted, for example buyer_counsel. Core roles are defined by the relevant workflow profile; extension roles use a namespace.",
+          "type": "string",
+          "pattern": "^([a-z][a-z0-9-]{1,31}:)?[a-z][a-z0-9_]{0,63}$"
+        },
+        "onBehalfOf": {
+          "description": "Participant on whose behalf the actor acted, when acting as an agent or representative.",
+          "$ref": "#/$defs/participantId"
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "actorType": { "const": "participant" } } },
+          "then": { "properties": { "actorId": { "$ref": "#/$defs/participantId" } } }
+        },
+        {
+          "if": { "properties": { "actorType": { "enum": ["system", "assistive_system"] } } },
+          "then": { "properties": { "actorId": { "$ref": "#/$defs/systemId" } } }
+        },
+        {
+          "if": { "properties": { "actorType": { "const": "external_provider" } } },
+          "then": { "properties": { "actorId": { "$ref": "#/$defs/issuerId" } } }
+        },
+        {
+          "if": { "properties": { "actorType": { "const": "adapter" } } },
+          "then": { "properties": { "actorId": { "$ref": "#/$defs/adapterId" } } }
+        }
+      ]
+    },
+    "subjectType": {
+      "description": "Type of Novera record a reference points to.",
+      "enum": ["participant", "asset", "workflow", "evidence", "policy_result"]
+    },
+    "subjectRef": {
+      "description": "Typed reference to a Novera record.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["subjectType", "subjectId"],
+      "properties": {
+        "subjectType": { "description": "Type of the referenced record.", "$ref": "#/$defs/subjectType" },
+        "subjectId": { "description": "Opaque identifier of the referenced record. The prefix MUST match subjectType.", "$ref": "#/$defs/opaqueId" }
+      },
+      "$ref": "#/$defs/subjectIdBinding"
+    },
+    "subjectIdBinding": {
+      "description": "Constrains subjectId to the identifier type implied by subjectType.",
+      "allOf": [
+        {
+          "if": { "properties": { "subjectType": { "const": "participant" } }, "required": ["subjectType"] },
+          "then": { "properties": { "subjectId": { "$ref": "#/$defs/participantId" } } }
+        },
+        {
+          "if": { "properties": { "subjectType": { "const": "asset" } }, "required": ["subjectType"] },
+          "then": { "properties": { "subjectId": { "$ref": "#/$defs/assetId" } } }
+        },
+        {
+          "if": { "properties": { "subjectType": { "const": "workflow" } }, "required": ["subjectType"] },
+          "then": { "properties": { "subjectId": { "$ref": "#/$defs/workflowId" } } }
+        },
+        {
+          "if": { "properties": { "subjectType": { "const": "evidence" } }, "required": ["subjectType"] },
+          "then": { "properties": { "subjectId": { "$ref": "#/$defs/evidenceId" } } }
+        },
+        {
+          "if": { "properties": { "subjectType": { "const": "policy_result" } }, "required": ["subjectType"] },
+          "then": { "properties": { "subjectId": { "$ref": "#/$defs/policyResultId" } } }
+        }
+      ]
+    },
+    "stateRef": {
+      "description": "Reference to one version of a Novera record. The digest is the state digest defined in architecture/state-model.md: SHA-256 over the RFC 8785 (JCS) canonical JSON of the record at that version with the top-level members transitions, updatedAt and metadata removed. Excluding history and bookkeeping lets a proposer compute the digest of the state it proposes before the transition is applied.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["subjectType", "subjectId", "version", "digest"],
+      "properties": {
+        "subjectType": { "description": "Type of the referenced record.", "$ref": "#/$defs/subjectType" },
+        "subjectId": { "description": "Opaque identifier of the referenced record.", "$ref": "#/$defs/opaqueId" },
+        "version": { "description": "Record version referenced. Versions start at 1 and increase by exactly 1 for each confirmed change.", "type": "integer", "minimum": 1 },
+        "state": {
+          "description": "Optional human-readable state label at that version, for example a NovaDeed workflowState. Informational; the digest is authoritative for the reference.",
+          "type": "string",
+          "maxLength": 96
+        },
+        "digest": { "description": "Digest of the canonical record at that version.", "$ref": "#/$defs/digest" }
+      },
+      "$ref": "#/$defs/subjectIdBinding"
+    },
+    "issuer": {
+      "description": "Description of a party that issues claims or evidence. Issuer descriptions identify organizations or roles; they MUST NOT contain personal data about natural persons.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["issuerId", "issuerType", "displayName"],
+      "properties": {
+        "issuerId": { "description": "Opaque issuer identifier.", "$ref": "#/$defs/issuerId" },
+        "issuerType": {
+          "description": "Category of issuer. self means the participant asserted the claim about itself.",
+          "anyOf": [
+            { "enum": ["identity_provider", "financial_institution", "government_authority", "professional", "platform_operator", "self"] },
+            { "$ref": "#/$defs/extensionToken" }
+          ]
+        },
+        "displayName": { "description": "Organization or role name of the issuer. For self-issued claims use a role description such as Participant (self-asserted).", "type": "string", "minLength": 1, "maxLength": 160 },
+        "jurisdiction": { "description": "Jurisdiction in which the issuer operates, where relevant.", "$ref": "#/$defs/jurisdiction" }
+      }
+    },
+    "externalRef": {
+      "description": "Reference to a record held in a system outside Novera. When relationship is authoritative_source, the external record is authoritative and the Novera record is not.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["refKey", "systemType", "system", "identifier", "relationship", "verificationStatus"],
+      "properties": {
+        "refKey": { "description": "Key unique within the enclosing record, used by relationships to point at this reference.", "$ref": "#/$defs/localKey" },
+        "systemType": {
+          "description": "Category of external system.",
+          "anyOf": [
+            {
+              "enum": [
+                "land_title_registry",
+                "government_registry",
+                "corporate_registry",
+                "transfer_agent",
+                "custodian",
+                "fund_administrator",
+                "identity_provider",
+                "bank",
+                "payment_system",
+                "warehouse_operator",
+                "trade_document_platform",
+                "equipment_registry",
+                "court_registry"
+              ]
+            },
+            { "$ref": "#/$defs/extensionToken" }
+          ]
+        },
+        "system": { "description": "Name of the external system or authority.", "type": "string", "minLength": 1, "maxLength": 160 },
+        "identifier": { "description": "Identifier of the record within the external system.", "type": "string", "minLength": 1, "maxLength": 256 },
+        "jurisdiction": { "description": "Jurisdiction of the external system, where relevant.", "$ref": "#/$defs/jurisdiction" },
+        "uri": { "description": "Optional locator for the external record. MUST NOT embed credentials or personal data.", "type": "string", "format": "uri" },
+        "relationship": {
+          "description": "How the external record relates to the Novera record: authoritative_source (the external record governs), corroborating (supports but does not govern), informational.",
+          "enum": ["authoritative_source", "corroborating", "informational"]
+        },
+        "verificationStatus": {
+          "description": "What Novera knows about the reference: unverified (asserted only), referenced (located through evidence), confirmed_by_source (the external system or its authorized agent confirmed it), disputed, unavailable (the external system could not be reached).",
+          "enum": ["unverified", "referenced", "confirmed_by_source", "disputed", "unavailable"]
+        },
+        "observedAt": { "description": "When the reference was last observed or checked.", "$ref": "#/$defs/timestamp" },
+        "evidenceRefs": {
+          "description": "Evidence supporting the reference.",
+          "type": "array",
+          "items": { "$ref": "#/$defs/evidenceId" },
+          "uniqueItems": true
+        }
+      }
+    },
+    "networkRef": {
+      "description": "Reference to an object on a distributed ledger or other network, produced and interpreted only by a network adapter. Network references are never canonical Novera identifiers.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["adapterId", "network", "referenceType", "value", "finality"],
+      "properties": {
+        "adapterId": { "description": "Adapter instance that produced or interprets the reference.", "$ref": "#/$defs/adapterId" },
+        "network": { "description": "CAIP-2 chain identifier (namespace:reference) of the network.", "type": "string", "pattern": "^[-a-z0-9]{3,8}:[-_a-zA-Z0-9]{1,32}$" },
+        "referenceType": {
+          "description": "Kind of network object referenced.",
+          "anyOf": [
+            { "enum": ["anchor", "transaction", "account", "contract", "token", "message"] },
+            { "$ref": "#/$defs/extensionToken" }
+          ]
+        },
+        "value": { "description": "Network-native reference value, such as a transaction hash. Opaque to the core.", "type": "string", "minLength": 1, "maxLength": 256 },
+        "finality": {
+          "description": "Adapter-reported finality: not_observed, observed (seen but not final under the adapter's policy), adapter_final (final under the adapter's documented policy), reorganized (no longer in the canonical history), failed.",
+          "enum": ["not_observed", "observed", "adapter_final", "reorganized", "failed"]
+        },
+        "observedAt": { "description": "When the adapter last observed the reference.", "$ref": "#/$defs/timestamp" }
+      }
+    }
+  }
+}
