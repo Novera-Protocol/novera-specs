@@ -50,6 +50,7 @@ const ID_FIELD = {
   evidence: "evidenceId",
   policy_result: "policyResultId",
   event: "eventId",
+  workflow_profile: "workflowProfileId",
 };
 
 // ---------------------------------------------------------------------------
@@ -424,6 +425,19 @@ export function semanticIssues(doc) {
       if (doc.supersedes === doc.policyResultId) add("SEM_POLICY", "a policy result cannot supersede itself");
       break;
     }
+    case "workflow_profile": {
+      const seenTransitions = new Set();
+      for (const rule of doc.transitionRules) {
+        const key = `${rule.from ?? "<create>"}->${rule.to}`;
+        if (seenTransitions.has(key)) add("SEM_PROFILE", `duplicate transition rule ${key}`);
+        seenTransitions.add(key);
+        const requiredTotal = rule.confirmation.requiredActors.reduce((sum, r) => sum + r.count, 0);
+        if (requiredTotal > rule.confirmation.minCount) {
+          add("SEM_PROFILE", `transition ${key} has required actor counts (${requiredTotal}) greater than minCount (${rule.confirmation.minCount})`);
+        }
+      }
+      break;
+    }
     case "event": {
       const refs = ["previousStateRef", "proposedStateRef", "confirmedStateRef"];
       for (const r of refs) {
@@ -496,6 +510,78 @@ export function crossExampleIssues(examples) {
       const asset = byId.get(`asset/${doc.assetId}`);
       if (asset && !asset.authoritativeRefs.some((r) => r.refKey === doc.controlState.authoritativeRefKey)) {
         out.push(["X_REFERENCE", file, `controlState.authoritativeRefKey ${doc.controlState.authoritativeRefKey} is not an authoritativeRefs entry of asset ${doc.assetId}`]);
+      }
+    }
+    if (doc.recordType === "workflow" && doc.workflowProfile) {
+      const profile = byId.get(`workflow_profile/${doc.workflowProfile}`);
+      if (!profile) {
+        out.push(["X_PROFILE", file, `workflowProfile ${doc.workflowProfile} has no matching workflow_profile example`]);
+      } else if (profile.profileVersion !== doc.workflowProfileVersion) {
+        out.push(["X_PROFILE", file, `workflowProfileVersion ${doc.workflowProfileVersion} does not match resolved profile version ${profile.profileVersion}`]);
+      } else if (profile.workflowType !== doc.workflowType) {
+        out.push(["X_PROFILE", file, `workflow type ${doc.workflowType} does not match profile workflowType ${profile.workflowType}`]);
+      } else if (doc.transitions.length > 0) {
+        const last = doc.transitions[doc.transitions.length - 1];
+        const rule = profile.transitionRules.find((r) => r.from === last.from && r.to === last.to);
+        if (!rule) {
+          out.push(["X_PROFILE_AUTH", file, `profile has no authorization rule for ${last.from ?? "<create>"} -> ${last.to}`]);
+        } else {
+          const transitionEvent = eventDocs.get(last.eventId);
+          if (transitionEvent) {
+            const causes = (transitionEvent.causedBy ?? []).map((id) => eventDocs.get(id)).filter(Boolean);
+            const proposals = causes.filter((e) => e.eventType === "proposal");
+            const confirmations = causes.filter((e) => e.eventType === "confirmation");
+            const proposal = proposals.find((e) => e.subjectId === doc.workflowId && e.proposedStateRef?.state === last.to);
+            if (!proposal) {
+              out.push(["X_PROFILE_AUTH", file, `state transition ${last.eventId} does not cite a proposal for target ${last.to}`]);
+            } else {
+              if (!rule.proposer.actorTypes.includes(proposal.actorRef.actorType)) {
+                out.push(["X_PROFILE_AUTH", file, `proposal actorType ${proposal.actorRef.actorType} is not permitted for ${last.from} -> ${last.to}`]);
+              }
+              if ((rule.proposer.roles ?? []).length > 0 && !rule.proposer.roles.includes(proposal.actorRef.role)) {
+                out.push(["X_PROFILE_AUTH", file, `proposal role ${proposal.actorRef.role ?? "<none>"} is not permitted for ${last.from} -> ${last.to}`]);
+              }
+              const distinctConfirmers = new Set(confirmations.map((e) => e.actorRef.actorId));
+              if (distinctConfirmers.size < rule.confirmation.minCount) {
+                out.push(["X_PROFILE_AUTH", file, `transition has ${distinctConfirmers.size} distinct confirmations; profile requires ${rule.confirmation.minCount}`]);
+              }
+              if (rule.confirmation.disallowProposerConfirmation && confirmations.some((e) => e.actorRef.actorId === proposal.actorRef.actorId)) {
+                out.push(["X_PROFILE_AUTH", file, "profile requires proposer/confirmer separation of duties"]);
+              }
+              for (const req of rule.confirmation.requiredActors) {
+                const matching = new Set(confirmations.filter((e) =>
+                  e.actorRef.actorType === req.actorType && (req.role === undefined || e.actorRef.role === req.role)
+                ).map((e) => e.actorRef.actorId));
+                if (matching.size < req.count) {
+                  out.push(["X_PROFILE_AUTH", file, `profile requires ${req.count} confirmation(s) from ${req.actorType}${req.role ? ` role ${req.role}` : ""}; found ${matching.size}`]);
+                }
+              }
+            }
+            for (const policyId of rule.requiredPolicyIds) {
+              const policyRef = doc.policyRefs.find((p) => p.policyId === policyId && p.requiredFor.includes(last.to));
+              if (!policyRef || policyRef.resultRefs.length === 0) {
+                out.push(["X_PROFILE_POLICY", file, `required policy ${policyId} is not configured with a result for target ${last.to}`]);
+                continue;
+              }
+              const resultId = policyRef.resultRefs[policyRef.resultRefs.length - 1];
+              const result = byId.get(`policy_result/${resultId}`);
+              if (!result) {
+                out.push(["X_PROFILE_POLICY", file, `required policy result ${resultId} is not present in examples`]);
+                continue;
+              }
+              if (!["pass", "not_applicable"].includes(result.result)) {
+                out.push(["X_PROFILE_POLICY", file, `required policy ${policyId} has non-permitting result ${result.result}`]);
+              }
+              if (result.validUntil && Date.parse(result.validUntil) < Date.parse(last.transitionedAt)) {
+                out.push(["X_PROFILE_POLICY", file, `required policy ${policyId} expired before the transition`]);
+              }
+              const validationCitesResult = causes.some((e) => e.eventType === "validation" && e.policyResultRefs.includes(resultId));
+              if (!validationCitesResult) {
+                out.push(["X_PROFILE_POLICY", file, `state transition does not cite a validation carrying required policy result ${resultId}`]);
+              }
+            }
+          }
+        }
       }
     }
     if (doc.recordType === "event") {
