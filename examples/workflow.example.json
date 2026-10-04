@@ -6,6 +6,7 @@
   "recordAuthority": "non_authoritative_coordination_record",
   "workflowType": "purchase",
   "workflowProfile": "novera-ref:real_estate.purchase.reference",
+  "workflowProfileVersion": "0.1.0",
   "assetId": "ast_76g1t48b5szc3fnpfcbmj8m95z",
   "participants": [
     {
