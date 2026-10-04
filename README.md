@@ -88,6 +88,8 @@ The core concepts are documented in [architecture/](architecture/):
 | [overview.md](architecture/overview.md) | Layers, records, identifiers, conformance language |
 | [state-model.md](architecture/state-model.md) | Record versions, state references and state digests |
 | [event-model.md](architecture/event-model.md) | NoveraEvent types, authority rules, ordering and idempotency |
+| [event-authentication.md](architecture/event-authentication.md) | Signed envelopes, actor/key binding, delegation and domain separation |
+| [event-integrity.md](architecture/event-integrity.md) | Per-subject audit-history digest chains and anchoring boundary |
 | [evidence-model.md](architecture/evidence-model.md) | Evidence as independent, hash-referenced records |
 | [policy-model.md](architecture/policy-model.md) | Policy evaluation results, not legal determinations |
 | [trust-boundaries.md](architecture/trust-boundaries.md) | What Novera records, references and never decides |
@@ -149,7 +151,7 @@ novera-specs/
 ├── examples/                     Synthetic examples, one per record schema
 │   └── real-estate-sequence/     Synthetic event sequence for the reference workflow
 ├── workflows/                    Reference workflows
-├── adr/                          Architecture decision records
+├── adr/                          Architecture decision records, including auth and audit-integrity decisions
 ├── security/                     Initial threat model
 ├── scripts/validate-schemas.mjs  Schema and example validator
 ├── tests/                        Validator tests (node:test)
