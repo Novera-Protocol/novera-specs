@@ -123,7 +123,7 @@ Each mitigation is labelled with where it lives. The labels are deliberately con
 - [Validator] State references MUST refer to the event's own subject, and versions MUST follow the previous version.
 - [Normative] A `previousStateRef` that is not the subject's current version MUST be rejected, so an old transition replayed against a newer record fails. A transition's `confirmedStateRef` MUST equal the proposal's `proposedStateRef`.
 
-**Residual risk / future work.** Event identifiers are unique only within one deployment, and events carry no deployment or domain identifier, so cross-deployment replay is not addressed. Without signatures, replay detection depends entirely on the integrity of the event store. A policy result can be relied on repeatedly within its `validUntil` window for the same input state; that is intended but should be bounded. Future work: domain separation inside a signed envelope, and expiry for confirmations.
+**Residual risk / future work.** The core event JSON remains unsigned, but the protocol contract for deployment/domain separation, signed envelopes and per-subject event-chain commitments is now specified in [event-authentication.md](../architecture/event-authentication.md) and [event-integrity.md](../architecture/event-integrity.md). Those controls are **not implemented** in this repository. Until a runtime implements them, replay detection still depends on the event store. A policy result can be relied on repeatedly within its `validUntil` window for the same input state; that is intended but should be bounded. Confirmation expiry remains future work.
 
 ### T-06 Duplicate events
 
@@ -148,7 +148,7 @@ Each mitigation is labelled with where it lives. The labels are deliberately con
 - [Validator] Rejected: a participant emitting a state transition; an assistive system confirming state.
 - [Normative] Implementations MUST authenticate the actor behind every event. An `actorRef` is a claim about who acted, not proof.
 
-**Residual risk / future work.** `actorType`, `role` and `onBehalfOf` are self-declared in the record. A compromised component can declare itself `system`. No authentication, key-binding or delegation model is specified. Future work: an actor authentication and authorization model, key management per actor type, delegation records linking `onBehalfOf` to an `authority_to_act` claim, and separation of duties for system components.
+**Residual risk / future work.** `actorType`, `role` and `onBehalfOf` remain self-declared in the bare event record, but [event-authentication.md](../architecture/event-authentication.md) now specifies the required signer-key binding, delegation checks and deployment-domain separation for conforming real-data/value deployments. These controls are not implemented here. Future work remains: select signature suites, key rotation/revocation mechanisms and deployment-specific authentication methods, then test separation of duties for system components.
 
 ### T-08 Improper workflow authorization
 
