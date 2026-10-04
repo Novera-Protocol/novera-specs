@@ -43,7 +43,7 @@ function assertFails(result, code) {
 test("repository schemas and synthetic examples are valid", () => {
   const result = validateRepository(ROOT);
   assert.deepEqual(result.errors, []);
-  assert.equal(result.schemaCount, 7);
+  assert.equal(result.schemaCount, 8);
   assert.ok(result.exampleCount >= 6);
 });
 
@@ -253,6 +253,40 @@ test("rejects a completed workflow without a settlement reference", () => {
 
 test("rejects a workflow that claims to be the authoritative ownership record", () => {
   const r = withRepo((d) => editJson(d, "examples/workflow.example.json", (x) => { x.recordAuthority = "authoritative_ownership_record"; }));
+  assertFails(r, "EXAMPLE_INVALID");
+});
+
+test("requires an exact workflow profile version when workflowProfile is present", () => {
+  const r = withRepo((d) => editJson(d, "examples/workflow.example.json", (x) => { delete x.workflowProfileVersion; }));
+  assertFails(r, "EXAMPLE_INVALID");
+});
+
+test("enforces workflow-profile confirmer roles for the current transition", () => {
+  const r = withRepo((d) => editJson(d, "examples/workflow-profile.example.json", (x) => {
+    const rule = x.transitionRules.find((tr) => tr.from === "conditions_pending" && tr.to === "approved");
+    rule.confirmation.requiredActors[0].role = "buyer";
+  }));
+  assertFails(r, "X_PROFILE_AUTH");
+});
+
+test("enforces workflow-profile required policy gates", () => {
+  const r = withRepo((d) => editJson(d, "examples/workflow-profile.example.json", (x) => {
+    const rule = x.transitionRules.find((tr) => tr.from === "conditions_pending" && tr.to === "approved");
+    rule.requiredPolicyIds = ["novera-ref:real_estate.purchase.missing_policy"];
+  }));
+  assertFails(r, "X_PROFILE_POLICY");
+});
+
+test("rejects settlement_pending while settlement is only prepared", () => {
+  const r = withRepo((d) => editJson(d, "examples/workflow.example.json", (x) => {
+    x.workflowState = "settlement_pending";
+    x.settlementRef = {
+      adapterId: "adp_01jq3k8m2n4p6r8s0t2v4w6x8y",
+      settlementType: "funds_and_title_closing",
+      status: "prepared",
+      updatedAt: "2026-03-12T10:00:03Z"
+    };
+  }));
   assertFails(r, "EXAMPLE_INVALID");
 });
 
