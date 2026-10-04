@@ -25,7 +25,8 @@ NovaDeed represents **ownership, document and workflow state** for one transacti
 | `version` | yes | Record version. MUST equal the number of transitions. |
 | `recordAuthority` | yes | Constant `non_authoritative_coordination_record`. |
 | `workflowType` | yes | `transfer`, `purchase`, `financing`, `issuance`, `redemption`, `pledge`, `release`, or a namespaced extension. |
-| `workflowProfile` | no | Namespaced profile, for example `novera-ref:real_estate.purchase.reference`. |
+| `workflowProfile` | no | Namespaced identifier of the machine-readable workflow profile, for example `novera-ref:real_estate.purchase.reference`. |
+| `workflowProfileVersion` | when profiled | Exact semantic version of `workflowProfile`; REQUIRED whenever `workflowProfile` is present. |
 | `assetId` | yes | The NovaRegistry asset. |
 | `participants` | yes | NovaID participants with `role` and `status` (`invited`, `active`, `withdrawn`). |
 | `controlState` | yes | The workflow's view of control over the asset; see below. |
@@ -38,6 +39,8 @@ NovaDeed represents **ownership, document and workflow state** for one transacti
 | `metadata` | no | Namespaced, non-normative metadata. |
 
 Core participant roles: `buyer`, `seller`, `transferor`, `transferee`, `issuer`, `investor`, `lender`, `borrower`, `buyer_counsel`, `seller_counsel`, `agent`, `servicer`, `escrow_holder`. Profiles MAY define namespaced roles.
+
+A workflow profile is a versioned protocol configuration record validated by [workflow-profile.schema.json](../schemas/workflow-profile.schema.json). Its transition rules define permitted proposer actor types and roles, required confirmer actor types and roles, confirmation thresholds and separation-of-duties requirements, required policies, and evidence categories. Implementations MUST resolve the exact `workflowProfile` + `workflowProfileVersion` pair before applying a profiled transition.
 
 ## Reference state machine
 
@@ -122,7 +125,7 @@ The validator checks contiguity, `from` chaining, ordering, permitted moves, tha
 
 Each `policyRefs` entry names a policy, its version, the states it gates (`requiredFor`) and its results (`resultRefs`). A workflow **MUST NOT** enter a state listed in `requiredFor` unless the latest result for that policy is `pass` or `not_applicable`.
 
-> In v0.1 this rule is specified but not checked by the validator, which does not yet resolve `resultRefs` against policy-result documents. Implementations MUST enforce it.
+For the included reference workflow, the validator resolves the current transition against the pinned workflow profile, verifies proposer/confirmer authorization, and resolves each profile-required policy gate to its latest referenced result. Evidence-type requirements are machine-readable in the profile but are not yet fully resolved across every evidence reference.
 
 Policy results are evaluation results, not legal conclusions. See [policy-model.md](../architecture/policy-model.md).
 
