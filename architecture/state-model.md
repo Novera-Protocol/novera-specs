@@ -77,6 +77,7 @@ These rules prevent lost updates, stale approvals and replay of an old transitio
 
 - A Novera record's state is the state of a **coordination record**. It is not the legal state of an asset, a title, a security or an identity. See [trust-boundaries.md](trust-boundaries.md).
 - State is not network state. A state digest MAY be anchored to a network through a Network Adapter, but an anchor proves only that a digest was published, not that the state is correct or legally effective. See [network-adapters.md](network-adapters.md).
+- State integrity is not event-history integrity. Because transition history is intentionally excluded from the state projection, implementations that claim a tamper-evident audit trail MUST also maintain the separate event-chain commitment in [event-integrity.md](event-integrity.md).
 
 ## Storage
 
