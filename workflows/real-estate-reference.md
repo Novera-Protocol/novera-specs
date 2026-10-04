@@ -20,7 +20,8 @@ Real estate is the **first concrete workflow** used to demonstrate the architect
 | Buyer participant state | NovaID participant `Buyer A`, with scoped claims and an eligibility state | [participant.example.json](../examples/participant.example.json) |
 | Seller participant state | NovaID participant (referenced by ID; record not included in v0.1 examples) | — |
 | Property asset record | NovaRegistry asset, `real_estate`, linked to the land-title reference | [asset.example.json](../examples/asset.example.json) |
-| Offer / workflow state | NovaDeed workflow `purchase`, reference profile | [workflow.example.json](../examples/workflow.example.json) |
+| Offer / workflow state | NovaDeed workflow `purchase`, pinned to reference profile v0.1.0 | [workflow.example.json](../examples/workflow.example.json) |
+| Authorization profile | Versioned transition authorization, confirmation, policy and evidence requirements | [workflow-profile.example.json](../examples/workflow-profile.example.json) |
 | Policy conditions | Policy results for participant eligibility and purchase conditions | [policy-result.example.json](../examples/policy-result.example.json) |
 | Evidence | Evidence records: offer, financing commitment, inspection report, title search result. Only the financing commitment is included as an example file; the others are referenced by ID. | [evidence.example.json](../examples/evidence.example.json) |
 | Ownership / document workflow | NovaDeed `controlState` mirroring the land-title reference, plus transitions | [workflow.example.json](../examples/workflow.example.json) |
@@ -109,9 +110,11 @@ All four events carry the same `previousStateRef` (version 4) and `proposedState
 ## What would happen next (not specified as behaviour in v0.1)
 
 1. `approved` → `ready_for_settlement` once a settlement profile's gating policy passes.
-2. `ready_for_settlement` → `settlement_pending` when a Settlement Adapter has `prepared`, `validated` and `submitted` an instruction to an external provider.
-3. The land title office records the transfer through its own process. The adapter `observe`s and `reconcile`s the provider's report; `controlState` may then move through `pending_external_registration` to `recorded_externally`.
-4. `settlement_pending` → `completed` only when `settlementRef.status` is `reconciled`.
+2. While still in `ready_for_settlement`, a Settlement Adapter `prepare`s and `validate`s the instruction without committing funds or assets.
+3. The workflow profile's authorization rules are satisfied and a normal confirmed state transition moves the workflow to `settlement_pending`, committing the validated settlement instruction reference.
+4. Only after the workflow is `settlement_pending` may the adapter `submit` the instruction to the external provider.
+5. The land title office and settlement provider act through their own processes. The adapter `observe`s and `reconcile`s their reports as `external_observation` events; `controlState` may later move through `pending_external_registration` to `recorded_externally`.
+6. `settlement_pending` → `completed` only through another confirmed Novera transition whose committed `settlementRef.status` is `reconciled`.
 
 None of these steps is implemented. No adapter, provider, registry or network is integrated.
 
