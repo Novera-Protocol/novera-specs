@@ -1,0 +1,63 @@
+{
+  "specVersion": "0.1",
+  "recordType": "evidence",
+  "evidenceId": "evd_6qzypatqh3xrkvarhwv373sdn6",
+  "version": 2,
+  "evidenceType": "financing_commitment",
+  "title": "Financing commitment letter",
+  "subjectRefs": [
+    {
+      "subjectType": "participant",
+      "subjectId": "ptc_00n9zj6rk31yr783ez9eknn2gb"
+    },
+    {
+      "subjectType": "workflow",
+      "subjectId": "wfl_0nd0m1dxe35ke860rweszzeq07"
+    }
+  ],
+  "source": "Fictional Lender (synthetic)",
+  "sourceType": "issuer_direct",
+  "contentHash": {
+    "algorithm": "sha-256",
+    "value": "b0b222f99f9f3b4b0d46c7c0ef5e6d4e0e660fba4c2b4af13f23962234dd5b34"
+  },
+  "mediaType": "application/pdf",
+  "storage": "hash_only",
+  "issuerRef": {
+    "issuerId": "iss_4aggvqmjxt4ec9hementaqjrq5",
+    "issuerType": "financial_institution",
+    "displayName": "Fictional Lender (synthetic)",
+    "jurisdiction": "XZ"
+  },
+  "observedAt": "2026-03-09T13:00:00Z",
+  "issuedAt": "2026-03-09T09:00:00Z",
+  "validFrom": "2026-03-09T09:00:00Z",
+  "validUntil": "2026-04-30T00:00:00Z",
+  "status": "accepted",
+  "review": {
+    "reviewedBy": {
+      "actorType": "participant",
+      "actorId": "ptc_0k1ef5z2tzfntg5a1m3ezctfbw",
+      "role": "buyer_counsel",
+      "onBehalfOf": "ptc_00n9zj6rk31yr783ez9eknn2gb"
+    },
+    "reviewedAt": "2026-03-10T09:30:00Z",
+    "outcome": "accepted",
+    "purpose": "real_estate.purchase.financing_condition",
+    "reasonCodes": [
+      "evidence.issuer_matches_claim",
+      "evidence.within_validity"
+    ]
+  },
+  "handling": {
+    "classification": "confidential",
+    "containsPersonalData": true,
+    "retentionPolicy": "novera-ref:retention.transaction_record"
+  },
+  "createdAt": "2026-03-09T13:00:00Z",
+  "updatedAt": "2026-03-10T09:30:00Z",
+  "metadata": {
+    "novera:synthetic": true,
+    "novera:label": "SYNTHETIC EXAMPLE DATA"
+  }
+}

@@ -1,0 +1,52 @@
+{
+  "specVersion": "0.1",
+  "recordType": "event",
+  "eventId": "evt_2f9e7b3t5dr0b5dt13y0wbtgfg",
+  "eventType": "confirmation",
+  "subjectType": "workflow",
+  "subjectId": "wfl_0nd0m1dxe35ke860rweszzeq07",
+  "actorRef": {
+    "actorType": "participant",
+    "actorId": "ptc_0mwq2c5mjkxd8ms9kckfb725bv",
+    "role": "seller"
+  },
+  "previousStateRef": {
+    "subjectType": "workflow",
+    "subjectId": "wfl_0nd0m1dxe35ke860rweszzeq07",
+    "version": 4,
+    "state": "conditions_pending",
+    "digest": {
+      "algorithm": "sha-256",
+      "value": "ae32ceff2f9a36076a97e4a22a4901507c92bb9f4249f5b5b207c995c2c763a4"
+    }
+  },
+  "proposedStateRef": {
+    "subjectType": "workflow",
+    "subjectId": "wfl_0nd0m1dxe35ke860rweszzeq07",
+    "version": 5,
+    "state": "approved",
+    "digest": {
+      "algorithm": "sha-256",
+      "value": "ff4ec61b43eb5fb1b1e157b784c2633e90750ceaac50a9fe6b18cf8c7ac5c827"
+    }
+  },
+  "causedBy": [
+    "evt_5xnmm3vb0sfn61yrtr0nece402",
+    "evt_36r73tfebvmrhv6es9sbysyzaf"
+  ],
+  "evidenceRefs": [],
+  "policyResultRefs": [
+    "plr_23jrsnnbaxhmstbp9see4r16rm"
+  ],
+  "reasonCodes": [
+    "conditions.fulfilment_acknowledged"
+  ],
+  "provenance": {
+    "channel": "direct_action"
+  },
+  "timestamp": "2026-03-12T10:00:00Z",
+  "metadata": {
+    "novera:synthetic": true,
+    "novera:label": "SYNTHETIC EXAMPLE DATA"
+  }
+}

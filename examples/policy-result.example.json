@@ -1,0 +1,133 @@
+{
+  "specVersion": "0.1",
+  "recordType": "policy_result",
+  "policyResultId": "plr_23jrsnnbaxhmstbp9see4r16rm",
+  "resultAuthority": "evaluation_result_not_legal_determination",
+  "policyId": "novera-ref:real_estate.purchase.conditions",
+  "policyVersion": "0.1.0",
+  "policyDigest": {
+    "algorithm": "sha-256",
+    "value": "0266464b36abbc9ae53cc36b4c80adf6e0b693daeb055b75d965d32db96e27b0"
+  },
+  "subjectRefs": [
+    {
+      "subjectType": "workflow",
+      "subjectId": "wfl_0nd0m1dxe35ke860rweszzeq07"
+    }
+  ],
+  "result": "pass",
+  "reasonCodes": [
+    "conditions.all_met"
+  ],
+  "conditions": [
+    {
+      "conditionId": "financing",
+      "description": "A financing commitment covering the purchase has been accepted for this workflow by buyer counsel.",
+      "result": "pass",
+      "evidenceRefs": [
+        "evd_6qzypatqh3xrkvarhwv373sdn6"
+      ],
+      "reasonCodes": [
+        "evidence.accepted"
+      ]
+    },
+    {
+      "conditionId": "inspection",
+      "description": "An inspection report has been received and the buyer has not raised an objection within the review period.",
+      "result": "pass",
+      "evidenceRefs": [
+        "evd_0nm225t6aydft7a7021c48bdq6"
+      ],
+      "reasonCodes": [
+        "inspection.no_objection"
+      ]
+    },
+    {
+      "conditionId": "title-search",
+      "description": "A title search result references the authoritative land title record named in the asset record.",
+      "result": "pass",
+      "evidenceRefs": [
+        "evd_728ykdj0ambpba3d1c0qmhgmh7"
+      ],
+      "reasonCodes": [
+        "title.reference_matches"
+      ]
+    },
+    {
+      "conditionId": "buyer-eligibility",
+      "description": "The buyer holds an eligible participant state scoped to this workflow.",
+      "result": "pass",
+      "reasonCodes": [
+        "eligibility.scoped_eligible"
+      ]
+    }
+  ],
+  "evidenceRefs": [
+    "evd_6qzypatqh3xrkvarhwv373sdn6",
+    "evd_0nm225t6aydft7a7021c48bdq6",
+    "evd_728ykdj0ambpba3d1c0qmhgmh7"
+  ],
+  "inputStateRefs": [
+    {
+      "subjectType": "workflow",
+      "subjectId": "wfl_0nd0m1dxe35ke860rweszzeq07",
+      "version": 4,
+      "state": "conditions_pending",
+      "digest": {
+        "algorithm": "sha-256",
+        "value": "ae32ceff2f9a36076a97e4a22a4901507c92bb9f4249f5b5b207c995c2c763a4"
+      }
+    },
+    {
+      "subjectType": "asset",
+      "subjectId": "ast_76g1t48b5szc3fnpfcbmj8m95z",
+      "version": 3,
+      "state": "registered",
+      "digest": {
+        "algorithm": "sha-256",
+        "value": "c84f943add9b390b36b4ccb6a091c655fe37194e519b354f933749809b52394f"
+      }
+    },
+    {
+      "subjectType": "participant",
+      "subjectId": "ptc_00n9zj6rk31yr783ez9eknn2gb",
+      "version": 5,
+      "state": "active",
+      "digest": {
+        "algorithm": "sha-256",
+        "value": "d97aa8b54c221eded579d4a0cf79c1ddb7ba5bd8a80be9567ff87fa544b633f1"
+      }
+    },
+    {
+      "subjectType": "evidence",
+      "subjectId": "evd_6qzypatqh3xrkvarhwv373sdn6",
+      "version": 2,
+      "state": "accepted",
+      "digest": {
+        "algorithm": "sha-256",
+        "value": "5930b84b2a7267908dc03308717e9b9fbeccae9c82652225749525c3d24e0001"
+      }
+    }
+  ],
+  "inputsDigest": {
+    "algorithm": "sha-256",
+    "value": "a40cf1472bd4a6195de7c05888bfc83485056d7554973db9893ed8ffde2d3208"
+  },
+  "evaluationMethod": "deterministic_rules",
+  "evaluatedBy": {
+    "actorType": "system",
+    "actorId": "sys_4ched9d92j9wsfytrfcck31kyn"
+  },
+  "evaluatedAt": "2026-03-12T08:59:30Z",
+  "validUntil": "2026-03-19T08:59:30Z",
+  "scope": {
+    "contextType": "workflow",
+    "contextId": "wfl_0nd0m1dxe35ke860rweszzeq07",
+    "jurisdiction": "XZ",
+    "purpose": "real_estate.purchase.conditions"
+  },
+  "metadata": {
+    "novera:synthetic": true,
+    "novera:label": "SYNTHETIC EXAMPLE DATA"
+  }
+}

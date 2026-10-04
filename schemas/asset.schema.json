@@ -1,0 +1,193 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.noveraprotocol.org/v0.1/asset.schema.json",
+  "title": "NovaRegistry asset record",
+  "description": "NovaRegistry asset record (Novera Protocol Specification v0.1, pre-production). Structured asset state maintained for coordination. A NovaRegistry record is not an authoritative registry entry and does not establish ownership, title or legal existence of an asset. Where an authoritative external record exists, it governs, and this record references it through authoritativeRefs.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "specVersion",
+    "recordType",
+    "assetId",
+    "version",
+    "recordAuthority",
+    "assetClass",
+    "identifiers",
+    "attributes",
+    "authoritativeRefs",
+    "evidenceRefs",
+    "relationships",
+    "status",
+    "createdAt",
+    "updatedAt"
+  ],
+  "properties": {
+    "specVersion": { "description": "Specification version.", "$ref": "common.schema.json#/$defs/specVersion" },
+    "recordType": { "description": "Record type discriminator.", "const": "asset" },
+    "assetId": { "description": "Opaque asset identifier. MUST NOT be a token identifier, contract address or any other network-specific identifier.", "$ref": "common.schema.json#/$defs/assetId" },
+    "version": { "description": "Record version. Starts at 1 and increases by exactly 1 for each confirmed change.", "type": "integer", "minimum": 1 },
+    "recordAuthority": {
+      "description": "States that this is a non-authoritative coordination record. Authoritative status, where it exists, belongs to the external records listed in authoritativeRefs.",
+      "const": "non_authoritative_coordination_record"
+    },
+    "assetClass": {
+      "description": "Asset class. The listed core values are illustrative and not exhaustive; namespaced extension values are permitted.",
+      "anyOf": [
+        {
+          "enum": [
+            "real_estate",
+            "private_market_interest",
+            "credit_instrument",
+            "fund_interest",
+            "commodity",
+            "equipment",
+            "trade_asset"
+          ]
+        },
+        { "$ref": "common.schema.json#/$defs/extensionToken" }
+      ]
+    },
+    "assetProfile": {
+      "description": "Optional profile that defines the expected attributes for this asset class, for example novera:real_estate.residential. Profiles are documented separately; v0.1 does not define normative attribute profiles.",
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{1,31}:[a-z][a-z0-9_.]{0,95}$"
+    },
+    "identifiers": {
+      "description": "Identifiers by which the asset is known in other systems, such as a parcel number or an instrument identifier. Identifiers locate records; they do not make them authoritative.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/identifier" }
+    },
+    "attributes": {
+      "description": "Structured attributes of the asset. Keys are lowerCamelCase or namespaced. Values are strings, numbers, booleans or arrays of strings. Attributes MUST NOT contain personal data; occupant and owner details are not asset attributes.",
+      "type": "object",
+      "propertyNames": { "pattern": "^([a-z][a-z0-9-]{1,31}:)?[a-z][A-Za-z0-9]{0,63}$" },
+      "additionalProperties": {
+        "anyOf": [
+          { "type": "string", "maxLength": 512 },
+          { "type": "number" },
+          { "type": "boolean" },
+          { "type": "array", "items": { "type": "string", "maxLength": 128 }, "maxItems": 64 }
+        ]
+      }
+    },
+    "authoritativeRefs": {
+      "description": "References to records held in external systems, such as a land title registry. When relationship is authoritative_source, the external record governs and this record is not authoritative.",
+      "type": "array",
+      "items": { "$ref": "common.schema.json#/$defs/externalRef" }
+    },
+    "evidenceRefs": {
+      "description": "Evidence associated with the asset record.",
+      "type": "array",
+      "items": { "$ref": "common.schema.json#/$defs/evidenceId" },
+      "uniqueItems": true
+    },
+    "relationships": {
+      "description": "Typed relationships between this asset and other assets, participants, evidence (documents), external authoritative references and workflows.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/relationship" }
+    },
+    "networkRefs": {
+      "description": "Optional references produced by network adapters, for example a hash anchor. Network references never replace assetId and do not confer authority.",
+      "type": "array",
+      "items": { "$ref": "common.schema.json#/$defs/networkRef" }
+    },
+    "status": {
+      "description": "Lifecycle status of the Novera record: draft (being assembled), registered (recorded for coordination), under_review, suspended (use in workflows paused), retired (no longer used). Registered does not mean registered with any authority.",
+      "enum": ["draft", "registered", "under_review", "suspended", "retired"]
+    },
+    "createdAt": { "description": "When the record was created.", "$ref": "common.schema.json#/$defs/timestamp" },
+    "updatedAt": { "description": "When the record was last changed.", "$ref": "common.schema.json#/$defs/timestamp" },
+    "metadata": { "description": "Namespaced, non-normative metadata.", "$ref": "common.schema.json#/$defs/metadata" }
+  },
+  "$defs": {
+    "identifier": {
+      "description": "An identifier for the asset in another system.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scheme", "value"],
+      "properties": {
+        "scheme": {
+          "description": "Identifier scheme, for example parcel_number, isin or lei. Core values are listed; namespaced extension values are permitted.",
+          "anyOf": [
+            { "enum": ["parcel_number", "title_number", "isin", "cusip", "lei", "serial_number", "vin", "warehouse_receipt_number", "internal_reference"] },
+            { "$ref": "common.schema.json#/$defs/extensionToken" }
+          ]
+        },
+        "value": { "description": "Identifier value.", "type": "string", "minLength": 1, "maxLength": 128 },
+        "issuer": { "description": "System or authority that assigned the identifier.", "type": "string", "maxLength": 160 },
+        "jurisdiction": { "description": "Jurisdiction of the identifier, where relevant.", "$ref": "common.schema.json#/$defs/jurisdiction" },
+        "authoritativeRefKey": { "description": "refKey of the authoritativeRefs entry that is the source of this identifier, if any.", "$ref": "common.schema.json#/$defs/localKey" }
+      }
+    },
+    "relationship": {
+      "description": "A typed relationship from this asset to a target. Exactly one target form is used, chosen by targetType.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["relationshipType", "targetType", "status"],
+      "properties": {
+        "relationshipType": {
+          "description": "Kind of relationship. recorded_owner_reference points at a participant named as owner by an authoritative source; it is a reference, not a Novera ownership determination.",
+          "anyOf": [
+            {
+              "enum": [
+                "recorded_owner_reference",
+                "proposed_transferee",
+                "lienholder_reference",
+                "custodian_reference",
+                "manager",
+                "servicer",
+                "subject_of_workflow",
+                "described_by_document",
+                "registered_at",
+                "component_of",
+                "secured_by"
+              ]
+            },
+            { "$ref": "common.schema.json#/$defs/extensionToken" }
+          ]
+        },
+        "targetType": {
+          "description": "Kind of target: asset, participant, document (an evidence record), workflow, or external_ref (an entry in authoritativeRefs).",
+          "enum": ["asset", "participant", "document", "workflow", "external_ref"]
+        },
+        "targetId": { "description": "Opaque identifier of the target, used for every targetType except external_ref.", "$ref": "common.schema.json#/$defs/opaqueId" },
+        "targetRefKey": { "description": "refKey of an authoritativeRefs entry, used only when targetType is external_ref.", "$ref": "common.schema.json#/$defs/localKey" },
+        "status": { "description": "Status of the relationship in the Novera record.", "enum": ["asserted", "referenced", "confirmed_by_source", "ended"] },
+        "evidenceRefs": {
+          "description": "Evidence supporting the relationship.",
+          "type": "array",
+          "items": { "$ref": "common.schema.json#/$defs/evidenceId" },
+          "uniqueItems": true
+        },
+        "since": { "description": "When the relationship began, if known.", "$ref": "common.schema.json#/$defs/timestamp" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "targetType": { "const": "external_ref" } }, "required": ["targetType"] },
+          "then": { "required": ["targetRefKey"], "not": { "required": ["targetId"] } },
+          "else": { "required": ["targetId"], "not": { "required": ["targetRefKey"] } }
+        },
+        {
+          "if": { "properties": { "targetType": { "const": "asset" } }, "required": ["targetType"] },
+          "then": { "properties": { "targetId": { "$ref": "common.schema.json#/$defs/assetId" } } }
+        },
+        {
+          "if": { "properties": { "targetType": { "const": "participant" } }, "required": ["targetType"] },
+          "then": { "properties": { "targetId": { "$ref": "common.schema.json#/$defs/participantId" } } }
+        },
+        {
+          "if": { "properties": { "targetType": { "const": "document" } }, "required": ["targetType"] },
+          "then": { "properties": { "targetId": { "$ref": "common.schema.json#/$defs/evidenceId" } } }
+        },
+        {
+          "if": { "properties": { "targetType": { "const": "workflow" } }, "required": ["targetType"] },
+          "then": { "properties": { "targetId": { "$ref": "common.schema.json#/$defs/workflowId" } } }
+        },
+        {
+          "if": { "properties": { "status": { "const": "confirmed_by_source" } }, "required": ["status"] },
+          "then": { "required": ["evidenceRefs"], "properties": { "evidenceRefs": { "minItems": 1 } } }
+        }
+      ]
+    }
+  }
+}

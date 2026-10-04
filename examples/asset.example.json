@@ -1,0 +1,98 @@
+{
+  "specVersion": "0.1",
+  "recordType": "asset",
+  "assetId": "ast_76g1t48b5szc3fnpfcbmj8m95z",
+  "version": 3,
+  "recordAuthority": "non_authoritative_coordination_record",
+  "assetClass": "real_estate",
+  "assetProfile": "novera-ref:real_estate.residential",
+  "identifiers": [
+    {
+      "scheme": "parcel_number",
+      "value": "XZ-PCL-0417-0092",
+      "issuer": "Fictional Land Title Office (synthetic)",
+      "jurisdiction": "XZ",
+      "authoritativeRefKey": "land-title"
+    },
+    {
+      "scheme": "internal_reference",
+      "value": "LISTING-SYN-0042",
+      "issuer": "Listing operator (synthetic)"
+    }
+  ],
+  "attributes": {
+    "propertyType": "detached_residential",
+    "lotAreaSqm": 412,
+    "floorAreaSqm": 186,
+    "yearBuilt": 2009,
+    "bedrooms": 3,
+    "tenure": "freehold",
+    "novera-ref:zoningCategory": "residential_low_density"
+  },
+  "authoritativeRefs": [
+    {
+      "refKey": "land-title",
+      "systemType": "land_title_registry",
+      "system": "Fictional Land Title Office (synthetic)",
+      "identifier": "XZ-TITLE-2009-004417",
+      "jurisdiction": "XZ",
+      "uri": "https://land-title.example/records/XZ-TITLE-2009-004417",
+      "relationship": "authoritative_source",
+      "verificationStatus": "referenced",
+      "observedAt": "2026-03-07T15:10:00Z",
+      "evidenceRefs": [
+        "evd_728ykdj0ambpba3d1c0qmhgmh7"
+      ]
+    }
+  ],
+  "evidenceRefs": [
+    "evd_728ykdj0ambpba3d1c0qmhgmh7",
+    "evd_0nm225t6aydft7a7021c48bdq6"
+  ],
+  "relationships": [
+    {
+      "relationshipType": "recorded_owner_reference",
+      "targetType": "participant",
+      "targetId": "ptc_0mwq2c5mjkxd8ms9kckfb725bv",
+      "status": "referenced",
+      "evidenceRefs": [
+        "evd_728ykdj0ambpba3d1c0qmhgmh7"
+      ]
+    },
+    {
+      "relationshipType": "proposed_transferee",
+      "targetType": "participant",
+      "targetId": "ptc_00n9zj6rk31yr783ez9eknn2gb",
+      "status": "asserted"
+    },
+    {
+      "relationshipType": "registered_at",
+      "targetType": "external_ref",
+      "targetRefKey": "land-title",
+      "status": "referenced",
+      "evidenceRefs": [
+        "evd_728ykdj0ambpba3d1c0qmhgmh7"
+      ]
+    },
+    {
+      "relationshipType": "described_by_document",
+      "targetType": "document",
+      "targetId": "evd_0nm225t6aydft7a7021c48bdq6",
+      "status": "referenced"
+    },
+    {
+      "relationshipType": "subject_of_workflow",
+      "targetType": "workflow",
+      "targetId": "wfl_0nd0m1dxe35ke860rweszzeq07",
+      "status": "referenced",
+      "since": "2026-03-04T10:00:00Z"
+    }
+  ],
+  "status": "registered",
+  "createdAt": "2026-03-02T14:00:00Z",
+  "updatedAt": "2026-03-10T16:20:00Z",
+  "metadata": {
+    "novera:synthetic": true,
+    "novera:label": "SYNTHETIC EXAMPLE DATA"
+  }
+}

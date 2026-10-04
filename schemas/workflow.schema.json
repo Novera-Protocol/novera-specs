@@ -1,0 +1,276 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.noveraprotocol.org/v0.1/workflow.schema.json",
+  "title": "NovaDeed workflow record",
+  "description": "NovaDeed workflow record (Novera Protocol Specification v0.1, pre-production). Coordinates ownership, document and workflow state for one transaction or process concerning one asset. NovaDeed does not create, transfer or extinguish legally effective ownership; those effects occur, if at all, in the authoritative external systems and legal processes the workflow references. Every material transition MUST be represented by a NoveraEvent.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "specVersion",
+    "recordType",
+    "workflowId",
+    "version",
+    "recordAuthority",
+    "workflowType",
+    "assetId",
+    "participants",
+    "controlState",
+    "workflowState",
+    "policyRefs",
+    "evidenceRefs",
+    "transitions",
+    "settlementRef",
+    "createdAt",
+    "updatedAt"
+  ],
+  "properties": {
+    "specVersion": { "description": "Specification version.", "$ref": "common.schema.json#/$defs/specVersion" },
+    "recordType": { "description": "Record type discriminator.", "const": "workflow" },
+    "workflowId": { "description": "Opaque workflow identifier. MUST NOT be a transaction hash or any other network-specific identifier.", "$ref": "common.schema.json#/$defs/workflowId" },
+    "version": { "description": "Record version. Starts at 1 and increases by exactly 1 for each confirmed transition, so version equals the number of transitions.", "type": "integer", "minimum": 1 },
+    "recordAuthority": {
+      "description": "States that this is a non-authoritative coordination record. It is not a deed, title document or register entry.",
+      "const": "non_authoritative_coordination_record"
+    },
+    "workflowType": {
+      "description": "Kind of workflow. Core values are listed; namespaced extension values are permitted.",
+      "anyOf": [
+        { "enum": ["transfer", "purchase", "financing", "issuance", "redemption", "pledge", "release"] },
+        { "$ref": "common.schema.json#/$defs/extensionToken" }
+      ]
+    },
+    "workflowProfile": {
+      "description": "Optional workflow profile that defines roles, states and policies, for example novera:real_estate.purchase.reference. The reference profile is described in workflows/real-estate-reference.md and is illustrative.",
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{1,31}:[a-z][a-z0-9_.]{0,95}$"
+    },
+    "assetId": { "description": "NovaRegistry asset the workflow concerns.", "$ref": "common.schema.json#/$defs/assetId" },
+    "participants": {
+      "description": "Participants in the workflow and the roles in which they act.",
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/workflowParticipant" }
+    },
+    "controlState": { "description": "What the workflow currently records about control and ownership of the asset. A mirror of external facts and workflow intent, not a determination.", "$ref": "#/$defs/controlState" },
+    "workflowState": {
+      "description": "Current workflow state. The core values form the illustrative reference state machine described in primitives/novadeed.md; they are coordination states, not legal categories. Profiles MAY define namespaced states.",
+      "anyOf": [
+        { "$ref": "#/$defs/coreWorkflowState" },
+        { "$ref": "common.schema.json#/$defs/extensionToken" }
+      ]
+    },
+    "policyRefs": {
+      "description": "Policies that apply to the workflow and the results recorded for them.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/policyRef" }
+    },
+    "evidenceRefs": {
+      "description": "Evidence associated with the workflow, including documents that make up the transaction package.",
+      "type": "array",
+      "items": { "$ref": "common.schema.json#/$defs/evidenceId" },
+      "uniqueItems": true
+    },
+    "transitions": {
+      "description": "Ordered history of confirmed state transitions. Each entry corresponds to exactly one state_transition NoveraEvent. Proposals that were never confirmed do not appear here.",
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/transition" }
+    },
+    "settlementRef": {
+      "description": "Reference to settlement handled through a Settlement Adapter, or null before settlement begins. Novera does not perform settlement; the adapter and the external settlement provider do.",
+      "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/settlementRef" }]
+    },
+    "createdAt": { "description": "When the workflow record was created.", "$ref": "common.schema.json#/$defs/timestamp" },
+    "updatedAt": { "description": "When the workflow record was last changed.", "$ref": "common.schema.json#/$defs/timestamp" },
+    "metadata": { "description": "Namespaced, non-normative metadata.", "$ref": "common.schema.json#/$defs/metadata" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "workflowState": { "enum": ["settlement_pending", "completed"] } }, "required": ["workflowState"] },
+      "then": { "properties": { "settlementRef": { "$ref": "#/$defs/settlementRef" } } }
+    },
+    {
+      "if": { "properties": { "workflowState": { "const": "completed" } }, "required": ["workflowState"] },
+      "then": { "properties": { "settlementRef": { "properties": { "status": { "const": "reconciled" } } } } }
+    }
+  ],
+  "$defs": {
+    "coreWorkflowState": {
+      "description": "Core reference workflow states.",
+      "enum": [
+        "draft",
+        "proposed",
+        "under_review",
+        "conditions_pending",
+        "approved",
+        "ready_for_settlement",
+        "settlement_pending",
+        "completed",
+        "cancelled"
+      ]
+    },
+    "workflowParticipant": {
+      "description": "A participant acting in the workflow.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["participantId", "role", "status"],
+      "properties": {
+        "participantId": { "description": "NovaID participant.", "$ref": "common.schema.json#/$defs/participantId" },
+        "role": {
+          "description": "Role in the workflow. Core values are listed; profiles MAY define namespaced roles.",
+          "anyOf": [
+            { "enum": ["buyer", "seller", "transferor", "transferee", "issuer", "investor", "lender", "borrower", "buyer_counsel", "seller_counsel", "agent", "servicer", "escrow_holder"] },
+            { "$ref": "common.schema.json#/$defs/extensionToken" }
+          ]
+        },
+        "status": { "description": "Participation status: invited, active or withdrawn.", "enum": ["invited", "active", "withdrawn"] },
+        "joinedAt": { "description": "When the participant joined the workflow.", "$ref": "common.schema.json#/$defs/timestamp" }
+      }
+    },
+    "controlState": {
+      "description": "Control and ownership state as recorded by the workflow.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "recordedControllerRefs", "basis"],
+      "properties": {
+        "status": {
+          "description": "Workflow view of control: unchanged (no change agreed), change_proposed, change_agreed_conditionally, change_agreed (conditions met within the workflow), pending_external_registration (awaiting the authoritative system), recorded_externally (the authoritative system reports the change and the report has been reconciled), withdrawn.",
+          "enum": [
+            "unchanged",
+            "change_proposed",
+            "change_agreed_conditionally",
+            "change_agreed",
+            "pending_external_registration",
+            "recorded_externally",
+            "withdrawn"
+          ]
+        },
+        "recordedControllerRefs": {
+          "description": "Participants that the authoritative source currently records as owners or controllers, as last observed. This mirrors the source; it is not a Novera determination.",
+          "type": "array",
+          "items": { "$ref": "common.schema.json#/$defs/participantId" },
+          "uniqueItems": true
+        },
+        "proposedControllerRefs": {
+          "description": "Participants proposed to become owners or controllers under the workflow.",
+          "type": "array",
+          "items": { "$ref": "common.schema.json#/$defs/participantId" },
+          "uniqueItems": true
+        },
+        "basis": {
+          "description": "Basis for recordedControllerRefs: authoritative_reference (taken from an authoritativeRefs entry on the asset), participant_assertion (asserted, not confirmed by a source), unknown.",
+          "enum": ["authoritative_reference", "participant_assertion", "unknown"]
+        },
+        "authoritativeRefKey": { "description": "refKey of the asset authoritativeRefs entry that supports recordedControllerRefs, when basis is authoritative_reference.", "$ref": "common.schema.json#/$defs/localKey" },
+        "observedAt": { "description": "When the authoritative source was last observed.", "$ref": "common.schema.json#/$defs/timestamp" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "basis": { "const": "authoritative_reference" } }, "required": ["basis"] },
+          "then": { "required": ["authoritativeRefKey", "observedAt"] }
+        },
+        {
+          "if": { "properties": { "status": { "enum": ["change_proposed", "change_agreed_conditionally", "change_agreed", "pending_external_registration"] } }, "required": ["status"] },
+          "then": { "required": ["proposedControllerRefs"], "properties": { "proposedControllerRefs": { "minItems": 1 } } }
+        }
+      ]
+    },
+    "policyRef": {
+      "description": "A policy that applies to the workflow.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["policyId", "policyVersion", "requiredFor", "resultRefs"],
+      "properties": {
+        "policyId": { "description": "Namespaced policy identifier, for example novera-ref:real_estate.purchase.conditions.", "$ref": "#/$defs/policyIdentifier" },
+        "policyVersion": { "description": "Policy version applied.", "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+([-+][0-9A-Za-z.-]+)?$" },
+        "requiredFor": {
+          "description": "Workflow states that MUST NOT be entered unless the latest result for this policy is pass or not_applicable.",
+          "type": "array",
+          "items": {
+            "anyOf": [
+              { "$ref": "#/$defs/coreWorkflowState" },
+              { "$ref": "common.schema.json#/$defs/extensionToken" }
+            ]
+          },
+          "uniqueItems": true
+        },
+        "resultRefs": {
+          "description": "Policy results recorded for this policy in this workflow, oldest first.",
+          "type": "array",
+          "items": { "$ref": "common.schema.json#/$defs/policyResultId" },
+          "uniqueItems": true
+        }
+      }
+    },
+    "policyIdentifier": {
+      "description": "Namespaced policy identifier.",
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{1,31}:[a-z][a-z0-9_.]{0,95}$"
+    },
+    "transition": {
+      "description": "One confirmed state transition.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sequence", "from", "to", "eventId", "transitionedAt"],
+      "properties": {
+        "sequence": { "description": "Position in the history, starting at 1 and contiguous.", "type": "integer", "minimum": 1 },
+        "from": {
+          "description": "State before the transition, or null for the transition that creates the workflow.",
+          "anyOf": [
+            { "type": "null" },
+            { "$ref": "#/$defs/coreWorkflowState" },
+            { "$ref": "common.schema.json#/$defs/extensionToken" }
+          ]
+        },
+        "to": {
+          "description": "State after the transition.",
+          "anyOf": [
+            { "$ref": "#/$defs/coreWorkflowState" },
+            { "$ref": "common.schema.json#/$defs/extensionToken" }
+          ]
+        },
+        "eventId": { "description": "The state_transition NoveraEvent that recorded this transition.", "$ref": "common.schema.json#/$defs/eventId" },
+        "transitionedAt": { "description": "When the transition was confirmed.", "$ref": "common.schema.json#/$defs/timestamp" },
+        "reasonCodes": {
+          "description": "Reasons for the transition.",
+          "type": "array",
+          "items": { "$ref": "common.schema.json#/$defs/reasonCode" },
+          "uniqueItems": true
+        }
+      }
+    },
+    "settlementRef": {
+      "description": "Reference to settlement through a Settlement Adapter. Status values follow the adapter lifecycle in architecture/settlement-adapter.md.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["adapterId", "settlementType", "status", "updatedAt"],
+      "properties": {
+        "adapterId": { "description": "Settlement Adapter instance handling the settlement.", "$ref": "common.schema.json#/$defs/adapterId" },
+        "settlementType": {
+          "description": "Kind of settlement the adapter coordinates.",
+          "anyOf": [
+            { "enum": ["funds_and_title_closing", "funds_transfer", "securities_delivery", "escrow_release"] },
+            { "$ref": "common.schema.json#/$defs/extensionToken" }
+          ]
+        },
+        "status": {
+          "description": "Adapter-reported lifecycle status: prepared, validated, submitted, observed, reconciled, failed or cancelled. reconciled means the adapter has matched the provider's report to the workflow; it is not a statement of legal finality.",
+          "enum": ["prepared", "validated", "submitted", "observed", "reconciled", "failed", "cancelled"]
+        },
+        "instructionDigest": { "description": "Digest of the settlement instruction produced by prepare().", "$ref": "common.schema.json#/$defs/digest" },
+        "providerReference": { "description": "Opaque reference assigned by the settlement provider, if any.", "type": "string", "maxLength": 256 },
+        "externalRefs": {
+          "description": "External records produced by settlement, such as a registration receipt.",
+          "type": "array",
+          "items": { "$ref": "common.schema.json#/$defs/externalRef" }
+        },
+        "networkRefs": {
+          "description": "Network references produced by a network adapter, if settlement involved a network.",
+          "type": "array",
+          "items": { "$ref": "common.schema.json#/$defs/networkRef" }
+        },
+        "updatedAt": { "description": "When the adapter last reported a change.", "$ref": "common.schema.json#/$defs/timestamp" }
+      }
+    }
+  }
+}
