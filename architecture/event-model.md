@@ -52,7 +52,7 @@ Further schema-enforced requirements:
 - **external_observation** — MUST carry `provenance.sourceRef` and MUST NOT carry `proposedStateRef` or `confirmedStateRef`. An observation can lead to a later proposal; it never applies state itself.
 - **assistive_system actors** — MAY only emit `proposal` events, MUST report `confidence`, MUST use `provenance.channel: "assistive_extraction"` and MUST disclose `provenance.extraction`. See [intelligence-boundary.md](intelligence-boundary.md).
 
-The schema cannot decide whether a particular participant is allowed to confirm a particular proposal. That is a workflow authorization decision.
+The event schema alone cannot decide whether a particular participant is allowed to confirm a particular proposal. For profiled NovaDeed workflows, that decision is made by the exact versioned workflow profile referenced by the workflow record; deployments MAY add stricter authorization rules but MUST NOT weaken the profile.
 
 ## Authorization of confirmations
 
@@ -64,7 +64,7 @@ An implementation MUST NOT record a `state_transition` unless:
 4. every confirmation required by the workflow's authorization rules has been recorded by an actor holding the required role, and is cited in `causedBy`;
 5. `confirmedStateRef` is identical to the proposal's `proposedStateRef`.
 
-Who must confirm which transition is defined by the workflow profile and the deployment's authorization rules, not by this schema. A participant MUST NOT be able to confirm its own proposal when the workflow requires a counterparty or independent confirmation. Implementations MUST authenticate the actor behind every event; an `actorRef` is a claim about who acted, not proof.
+Who must confirm which transition is defined by the machine-readable workflow profile and, where applicable, stricter deployment authorization rules. A profile can constrain proposer actor types and roles, required confirmer actor types and roles, confirmation count, proposer/confirmer separation, and policy/evidence gates. A participant MUST NOT be able to satisfy a confirmation when the profile requires a counterparty or independent confirmer. Implementations MUST authenticate the actor behind every event; an `actorRef` is a claim about who acted, not proof.
 
 ## Event fields
 
