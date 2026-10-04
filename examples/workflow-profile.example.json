@@ -1,0 +1,100 @@
+{
+  "specVersion": "0.1",
+  "recordType": "workflow_profile",
+  "workflowProfileId": "novera-ref:real_estate.purchase.reference",
+  "profileVersion": "0.1.0",
+  "workflowType": "purchase",
+  "transitionRules": [
+    {
+      "from": null,
+      "to": "draft",
+      "proposer": { "actorTypes": ["participant"], "roles": ["buyer", "buyer_counsel"] },
+      "confirmation": { "minCount": 0, "requiredActors": [], "disallowProposerConfirmation": false },
+      "requiredPolicyIds": [],
+      "requiredEvidenceTypes": []
+    },
+    {
+      "from": "draft",
+      "to": "proposed",
+      "proposer": { "actorTypes": ["participant"], "roles": ["buyer", "buyer_counsel"] },
+      "confirmation": { "minCount": 0, "requiredActors": [], "disallowProposerConfirmation": false },
+      "requiredPolicyIds": [],
+      "requiredEvidenceTypes": ["offer"]
+    },
+    {
+      "from": "proposed",
+      "to": "under_review",
+      "proposer": { "actorTypes": ["participant"], "roles": ["seller", "seller_counsel"] },
+      "confirmation": { "minCount": 0, "requiredActors": [], "disallowProposerConfirmation": false },
+      "requiredPolicyIds": ["novera-ref:real_estate.purchase.participant_eligibility"],
+      "requiredEvidenceTypes": ["offer"]
+    },
+    {
+      "from": "under_review",
+      "to": "conditions_pending",
+      "proposer": { "actorTypes": ["participant"], "roles": ["seller", "seller_counsel"] },
+      "confirmation": {
+        "minCount": 1,
+        "requiredActors": [{ "actorType": "participant", "role": "buyer", "count": 1 }],
+        "disallowProposerConfirmation": true
+      },
+      "requiredPolicyIds": [],
+      "requiredEvidenceTypes": ["offer"]
+    },
+    {
+      "from": "conditions_pending",
+      "to": "approved",
+      "proposer": { "actorTypes": ["participant"], "roles": ["buyer", "buyer_counsel"] },
+      "confirmation": {
+        "minCount": 1,
+        "requiredActors": [{ "actorType": "participant", "role": "seller", "count": 1 }],
+        "disallowProposerConfirmation": true
+      },
+      "requiredPolicyIds": ["novera-ref:real_estate.purchase.conditions"],
+      "requiredEvidenceTypes": ["financing_commitment", "inspection_report", "title_search"]
+    },
+    {
+      "from": "approved",
+      "to": "ready_for_settlement",
+      "proposer": { "actorTypes": ["participant"], "roles": ["buyer_counsel", "seller_counsel"] },
+      "confirmation": {
+        "minCount": 2,
+        "requiredActors": [
+          { "actorType": "participant", "role": "buyer_counsel", "count": 1 },
+          { "actorType": "participant", "role": "seller_counsel", "count": 1 }
+        ],
+        "disallowProposerConfirmation": false
+      },
+      "requiredPolicyIds": [],
+      "requiredEvidenceTypes": ["closing_instruction"]
+    },
+    {
+      "from": "ready_for_settlement",
+      "to": "settlement_pending",
+      "proposer": { "actorTypes": ["system"], "roles": [] },
+      "confirmation": {
+        "minCount": 1,
+        "requiredActors": [{ "actorType": "participant", "role": "buyer_counsel", "count": 1 }],
+        "disallowProposerConfirmation": false
+      },
+      "requiredPolicyIds": [],
+      "requiredEvidenceTypes": ["settlement_validation"]
+    },
+    {
+      "from": "settlement_pending",
+      "to": "completed",
+      "proposer": { "actorTypes": ["system"], "roles": [] },
+      "confirmation": {
+        "minCount": 1,
+        "requiredActors": [{ "actorType": "participant", "role": "buyer_counsel", "count": 1 }],
+        "disallowProposerConfirmation": false
+      },
+      "requiredPolicyIds": [],
+      "requiredEvidenceTypes": ["settlement_reconciliation"]
+    }
+  ],
+  "metadata": {
+    "novera:synthetic": true,
+    "novera:label": "SYNTHETIC EXAMPLE DATA"
+  }
+}
