@@ -137,4 +137,4 @@ A NoveraEvent does **not** imply blockchain finality, settlement finality or leg
 
 ## Integrity
 
-At v0.1, events are not signed by this specification. Implementations MUST authenticate actors and SHOULD protect event logs against modification, for example by hash-chaining events per subject or signing them. A signature envelope is an open question for a later revision. See [security/threat-model.md](../security/threat-model.md).
+The core event JSON remains signature-format agnostic, but the authentication contract is now specified in [event-authentication.md](event-authentication.md): deployments processing real participant data, real documents or value MUST verify a signed envelope that binds the exact event digest, authenticated actor, deployment domain, delegation context and preceding event-chain digest. Event-history integrity is specified separately in [event-integrity.md](event-integrity.md). No production key infrastructure or signature verification is implemented in this repository.
