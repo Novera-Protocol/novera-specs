@@ -28,7 +28,7 @@ Accepting evidence for one purpose does not accept it for any other purpose.
 | --- | --- | --- |
 | `evidenceId` | yes | Opaque identifier (`evd_…`). |
 | `version` | yes | Record version; see [state-model.md](state-model.md). |
-| `evidenceType` | yes | Extensible vocabulary: `identity_verification_report`, `financing_commitment`, `proof_of_funds`, `title_search_result`, `registry_extract`, `inspection_report`, `appraisal_report`, `signed_agreement`, `corporate_resolution`, `custody_statement`, `insurance_certificate`, `settlement_receipt`, `network_observation`, or an extension token. |
+| `evidenceType` | yes | Extensible vocabulary: `identity_verification_report`, `financing_commitment`, `proof_of_funds`, `title_search_result`, `registry_extract`, `inspection_report`, `appraisal_report`, `signed_agreement`, `offer`, `closing_instruction`, `settlement_validation`, `settlement_reconciliation`, `corporate_resolution`, `custody_statement`, `insurance_certificate`, `settlement_receipt`, `network_observation`, or an extension token. |
 | `title` | no | Short human-readable label. MUST NOT contain personal data. |
 | `subjectRefs` | yes | The participants, assets, workflows or other records the evidence concerns. |
 | `source` | yes | Human-readable name of where the evidence came from. |
