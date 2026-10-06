@@ -51,7 +51,7 @@
         "disallowProposerConfirmation": true
       },
       "requiredPolicyIds": ["novera-ref:real_estate.purchase.conditions"],
-      "requiredEvidenceTypes": ["financing_commitment", "inspection_report", "title_search"]
+      "requiredEvidenceTypes": ["financing_commitment", "inspection_report", "title_search_result"]
     },
     {
       "from": "approved",
