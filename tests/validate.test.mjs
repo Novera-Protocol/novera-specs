@@ -47,6 +47,33 @@ test("repository schemas and synthetic examples are valid", () => {
   assert.ok(result.exampleCount >= 6);
 });
 
+test("reference workflow required evidence types are permitted by the Evidence schema", () => {
+  const evidenceSchema = JSON.parse(
+    fs.readFileSync(path.join(ROOT, "schemas/evidence.schema.json"), "utf8"),
+  );
+  const profile = JSON.parse(
+    fs.readFileSync(path.join(ROOT, "examples/workflow-profile.example.json"), "utf8"),
+  );
+
+  const coreTypes = new Set(
+    evidenceSchema.properties.evidenceType.anyOf
+      .find((entry) => Array.isArray(entry.enum))
+      .enum,
+  );
+  const extensionPattern = new RegExp(
+    "^[a-z][a-z0-9-]{1,31}:[a-z][a-z0-9_]{0,63}$",
+  );
+
+  for (const rule of profile.transitionRules) {
+    for (const evidenceType of rule.requiredEvidenceTypes) {
+      assert.ok(
+        coreTypes.has(evidenceType) || extensionPattern.test(evidenceType),
+        `required evidence type ${evidenceType} is not permitted by evidence.schema.json`,
+      );
+    }
+  }
+});
+
 // ------------------------------------------------- schema structure checks
 test("rejects a schema that is not valid JSON", () => {
   const r = withRepo((d) => fs.writeFileSync(path.join(d, "schemas/asset.schema.json"), "{ not json"));
