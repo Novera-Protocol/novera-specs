@@ -1,8 +1,8 @@
 {
   "name": "novera-specs",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
-  "description": "Novera Protocol Specification v0.1 (pre-production design specification): schemas, synthetic examples and validation.",
+  "description": "Novera Protocol Specification v0.1.1 (pre-production design specification): schemas, synthetic examples and validation.",
   "license": "Apache-2.0",
   "type": "module",
   "engines": {
